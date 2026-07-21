@@ -507,12 +507,12 @@ Best Regards,
 
                       <div className="md:col-span-4">
                         <label className="block text-[8px] font-sans text-white/40 uppercase tracking-widest mb-1">
-                          Video Stream URL (.mp4)
+                          Video Link (YouTube, Drive, Vimeo, or .mp4)
                         </label>
                         <input
                           type="url"
                           required
-                          placeholder="e.g. https://.../ep1.mp4"
+                          placeholder="YouTube, Google Drive, or .mp4 URL"
                           value={ep.videoUrl}
                           onChange={(e) => {
                             const newEps = [...episodes];
@@ -571,12 +571,12 @@ Best Regards,
               </h3>
 
               <div>
-                <label className="block text-[9px] font-sans text-white/40 uppercase tracking-widest mb-1.5">Direct Video Link (.mp4 / stream URL)</label>
+                <label className="block text-[9px] font-sans text-white/40 uppercase tracking-widest mb-1.5">Video Screener / Stream Link (YouTube, Drive, Vimeo, or .mp4)</label>
                 <input
                   id="submit-custom-video-input"
                   type="url"
                   required
-                  placeholder="Paste direct .mp4 address (e.g., https://example.com/movie.mp4)"
+                  placeholder="Paste YouTube, Google Drive link, or direct .mp4 address"
                   value={customVideoUrl}
                   onChange={(e) => setCustomVideoUrl(e.target.value)}
                   className="w-full bg-white/5 hover:bg-white/10 text-[#F5F5F7] text-xs px-3 py-2.5 rounded border border-white/10 focus:border-amber-500/50 focus:outline-none focus:bg-white/5 transition-all font-sans"

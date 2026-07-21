@@ -39,10 +39,60 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar }: Vid
     ? film.episodes[activeEpisodeIdx].videoUrl
     : film.videoUrl;
 
+  // Helper to parse dynamic embedded links (Google Drive, YouTube, Vimeo)
+  const getEmbedData = (url: string) => {
+    if (!url) return { isEmbed: false, embedUrl: '' };
+    const trimmed = url.trim();
+
+    // 1. YouTube Matches
+    const ytWatchRegex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/;
+    const ytMatch = trimmed.match(ytWatchRegex);
+    if (ytMatch && ytMatch[1]) {
+      return {
+        isEmbed: true,
+        embedUrl: `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1&rel=0`
+      };
+    }
+
+    // 2. Google Drive Matches
+    const gdFileRegex = /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/;
+    const gdOpenRegex = /drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/;
+    
+    const gdFileMatch = trimmed.match(gdFileRegex);
+    if (gdFileMatch && gdFileMatch[1]) {
+      return {
+        isEmbed: true,
+        embedUrl: `https://drive.google.com/file/d/${gdFileMatch[1]}/preview`
+      };
+    }
+    
+    const gdOpenMatch = trimmed.match(gdOpenRegex);
+    if (gdOpenMatch && gdOpenMatch[1]) {
+      return {
+        isEmbed: true,
+        embedUrl: `https://drive.google.com/file/d/${gdOpenMatch[1]}/preview`
+      };
+    }
+
+    // 3. Vimeo Matches
+    const vimeoRegex = /(?:vimeo\.com\/|player\.vimeo\.com\/video\/)([0-9]+)/;
+    const vimeoMatch = trimmed.match(vimeoRegex);
+    if (vimeoMatch && vimeoMatch[1]) {
+      return {
+        isEmbed: true,
+        embedUrl: `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=1`
+      };
+    }
+
+    return { isEmbed: false, embedUrl: trimmed };
+  };
+
+  const { isEmbed, embedUrl } = getEmbedData(currentVideoUrl);
+
   // Auto-play when video URL changes
   useEffect(() => {
     setHasError(false);
-    if (videoRef.current) {
+    if (!isEmbed && videoRef.current) {
       videoRef.current.load();
       setIsPlaying(false);
       setCurrentTime(0);
@@ -60,7 +110,7 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar }: Vid
           });
       }
     }
-  }, [currentVideoUrl]);
+  }, [currentVideoUrl, isEmbed]);
 
   // Handle controls visibility timeout on mouse movement
   useEffect(() => {
@@ -207,24 +257,35 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar }: Vid
           theaterMode ? 'w-full aspect-[21/9]' : 'w-full aspect-video'
         } ${isLightsOff ? 'z-55 shadow-amber-500/5 ring-1 ring-amber-500/10' : ''}`}
       >
-        {/* Video HTML5 Tag */}
-        <video
-          id="cinema-html5-video"
-          ref={videoRef}
-          src={currentVideoUrl}
-          className="w-full h-full object-contain cursor-pointer"
-          onClick={togglePlay}
-          onTimeUpdate={handleTimeUpdate}
-          onLoadedMetadata={handleLoadedMetadata}
-          onError={() => {
-            setHasError(true);
-            setIsPlaying(false);
-          }}
-          playsInline
-        />
+        {/* Video HTML5 Tag or Dynamic Embed Player */}
+        {isEmbed ? (
+          <iframe
+            id="cinema-embed-player"
+            src={embedUrl}
+            className="w-full h-full border-0 bg-black"
+            allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+            allowFullScreen
+            title={film.title}
+          />
+        ) : (
+          <video
+            id="cinema-html5-video"
+            ref={videoRef}
+            src={currentVideoUrl}
+            className="w-full h-full object-contain cursor-pointer"
+            onClick={togglePlay}
+            onTimeUpdate={handleTimeUpdate}
+            onLoadedMetadata={handleLoadedMetadata}
+            onError={() => {
+              setHasError(true);
+              setIsPlaying(false);
+            }}
+            playsInline
+          />
+        )}
 
         {/* Error overlay or friendly fallback */}
-        {hasError && (
+        {hasError && !isEmbed && (
           <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/90 p-6 text-center">
             <AlertCircle className="h-10 w-10 text-amber-500 mb-3 animate-pulse" />
             <h4 className="text-sm font-bold text-white uppercase tracking-widest mb-2">Cinematic Stream Offline</h4>
@@ -247,16 +308,18 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar }: Vid
         )}
 
         {/* Big Centered Play/Pause Click Overlay */}
-        <div 
-          onClick={togglePlay}
-          className={`absolute inset-0 flex items-center justify-center bg-black/40 transition-opacity duration-300 cursor-pointer ${
-            isPlaying ? 'opacity-0 pointer-events-none' : 'opacity-100'
-          }`}
-        >
-          <div className="h-16 w-16 md:h-18 md:w-18 rounded border border-white/25 bg-black/75 text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-all backdrop-blur-md">
-            <Play className="h-6 w-6 fill-current translate-x-0.5" />
+        {!isEmbed && (
+          <div 
+            onClick={togglePlay}
+            className={`absolute inset-0 flex items-center justify-center bg-black/40 transition-opacity duration-300 cursor-pointer ${
+              isPlaying ? 'opacity-0 pointer-events-none' : 'opacity-100'
+            }`}
+          >
+            <div className="h-16 w-16 md:h-18 md:w-18 rounded border border-white/25 bg-black/75 text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-all backdrop-blur-md">
+              <Play className="h-6 w-6 fill-current translate-x-0.5" />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Cinematic Custom HUD Overlay Controls */}
         <div 
@@ -265,57 +328,67 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar }: Vid
           }`}
         >
           {/* Timeline scrub bar */}
-          <div className="flex items-center gap-3 w-full group/timeline">
-            <span className="text-[9px] font-mono text-white/40 tabular-nums">
-              {formatTime(currentTime)}
-            </span>
-            <input
-              id="video-scrub-input"
-              type="range"
-              min="0"
-              max={duration || 100}
-              step="0.1"
-              value={currentTime}
-              onChange={handleScrub}
-              className="flex-1 h-1 rounded appearance-none cursor-pointer bg-white/10 accent-amber-500 focus:outline-none"
-            />
-            <span className="text-[9px] font-mono text-white/40 tabular-nums">
-              {formatTime(duration)}
-            </span>
-          </div>
+          {!isEmbed && (
+            <div className="flex items-center gap-3 w-full group/timeline">
+              <span className="text-[9px] font-mono text-white/40 tabular-nums">
+                {formatTime(currentTime)}
+              </span>
+              <input
+                id="video-scrub-input"
+                type="range"
+                min="0"
+                max={duration || 100}
+                step="0.1"
+                value={currentTime}
+                onChange={handleScrub}
+                className="flex-1 h-1 rounded appearance-none cursor-pointer bg-white/10 accent-amber-500 focus:outline-none"
+              />
+              <span className="text-[9px] font-mono text-white/40 tabular-nums">
+                {formatTime(duration)}
+              </span>
+            </div>
+          )}
 
           {/* Controls button row */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              {/* Play / Pause Toggle */}
-              <button 
-                id="btn-play-toggle"
-                onClick={togglePlay} 
-                className="text-white hover:text-amber-500 transition-colors cursor-pointer"
-              >
-                {isPlaying ? <Pause className="h-4.5 w-4.5 fill-current" /> : <Play className="h-4.5 w-4.5 fill-current" />}
-              </button>
+              {!isEmbed ? (
+                <>
+                  {/* Play / Pause Toggle */}
+                  <button 
+                    id="btn-play-toggle"
+                    onClick={togglePlay} 
+                    className="text-white hover:text-amber-500 transition-colors cursor-pointer"
+                  >
+                    {isPlaying ? <Pause className="h-4.5 w-4.5 fill-current" /> : <Play className="h-4.5 w-4.5 fill-current" />}
+                  </button>
 
-              {/* Volume Slider & Icon */}
-              <div className="flex items-center gap-2 group/volume">
-                <button 
-                  id="btn-volume-toggle"
-                  onClick={toggleMute} 
-                  className="text-white hover:text-amber-500 transition-colors cursor-pointer"
-                >
-                  {isMuted ? <VolumeX className="h-4.5 w-4.5" /> : <Volume2 className="h-4.5 w-4.5" />}
-                </button>
-                <input
-                  id="video-volume-input"
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.05"
-                  value={isMuted ? 0 : volume}
-                  onChange={handleVolumeChange}
-                  className="w-12 h-1 bg-white/10 accent-amber-500 rounded appearance-none cursor-pointer group-hover/volume:w-16 transition-all focus:outline-none"
-                />
-              </div>
+                  {/* Volume Slider & Icon */}
+                  <div className="flex items-center gap-2 group/volume">
+                    <button 
+                      id="btn-volume-toggle"
+                      onClick={toggleMute} 
+                      className="text-white hover:text-amber-500 transition-colors cursor-pointer"
+                    >
+                      {isMuted ? <VolumeX className="h-4.5 w-4.5" /> : <Volume2 className="h-4.5 w-4.5" />}
+                    </button>
+                    <input
+                      id="video-volume-input"
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.05"
+                      value={isMuted ? 0 : volume}
+                      onChange={handleVolumeChange}
+                      className="w-12 h-1 bg-white/10 accent-amber-500 rounded appearance-none cursor-pointer group-hover/volume:w-16 transition-all focus:outline-none"
+                    />
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-center gap-2 bg-amber-500/10 px-2.5 py-0.5 rounded border border-amber-500/20 text-[9px] text-amber-500 font-mono font-bold uppercase tracking-widest">
+                  ✦ Dynamic Embed Stream
+                </div>
+              )}
 
               {/* Badge info */}
               <div className="hidden sm:flex items-center gap-2 bg-white/5 px-2.5 py-0.5 rounded border border-white/10">
@@ -327,14 +400,16 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar }: Vid
 
             <div className="flex items-center gap-4">
               {/* Speed Controller */}
-              <button
-                id="btn-speed-control"
-                onClick={changeSpeed}
-                className="text-[9px] font-mono font-bold tracking-widest px-2 py-0.5 rounded bg-white/5 text-white/70 border border-white/15 hover:border-white/30 active:scale-95 transition-all cursor-pointer"
-                title="Playback speed"
-              >
-                {playbackSpeed === 1 ? '1.0X' : `${playbackSpeed}X`}
-              </button>
+              {!isEmbed && (
+                <button
+                  id="btn-speed-control"
+                  onClick={changeSpeed}
+                  className="text-[9px] font-mono font-bold tracking-widest px-2 py-0.5 rounded bg-white/5 text-white/70 border border-white/15 hover:border-white/30 active:scale-95 transition-all cursor-pointer"
+                  title="Playback speed"
+                >
+                  {playbackSpeed === 1 ? '1.0X' : `${playbackSpeed}X`}
+                </button>
+              )}
 
               {/* Lights Toggle */}
               <button
