@@ -1,0 +1,111 @@
+{
+  "entities": {
+    "Filmmaker": {
+      "title": "Filmmaker",
+      "description": "Profile of a filmmaker highlighted on the platform.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "bio": { "type": "string" },
+        "avatarUrl": { "type": "string" },
+        "featuredFilmId": { "type": "string" },
+        "filmsCount": { "type": "number" },
+        "instagram": { "type": "string" },
+        "website": { "type": "string" },
+        "backdropUrl": { "type": "string" }
+      },
+      "required": ["id", "name", "bio", "avatarUrl", "featuredFilmId", "filmsCount"]
+    },
+    "Film": {
+      "title": "Film",
+      "description": "A film or web series screening on the platform.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "director": { "type": "string" },
+        "directorId": { "type": "string" },
+        "description": { "type": "string" },
+        "releaseYear": { "type": "number" },
+        "genre": { "type": "array" },
+        "type": { "type": "string", "enum": ["film", "series"] },
+        "duration": { "type": "string" },
+        "videoUrl": { "type": "string" },
+        "posterUrl": { "type": "string" },
+        "backdropUrl": { "type": "string" },
+        "likes": { "type": "number" },
+        "views": { "type": "number" },
+        "isFeatured": { "type": "boolean" },
+        "cameraUsed": { "type": "string" },
+        "lensUsed": { "type": "string" },
+        "reviews": { "type": "array" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["id", "title", "director", "directorId", "description", "releaseYear", "genre", "type", "duration", "videoUrl", "posterUrl", "likes", "views", "isFeatured"]
+    },
+    "UpcomingFilm": {
+      "title": "UpcomingFilm",
+      "description": "A trailer or teaser listing for a film coming soon.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "director": { "type": "string" },
+        "expectedRelease": { "type": "string" },
+        "genre": { "type": "array" },
+        "thumbnailUrl": { "type": "string" },
+        "videoUrl": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "required": ["id", "title", "director", "expectedRelease", "genre", "thumbnailUrl", "videoUrl", "description"]
+    },
+    "User": {
+      "title": "User",
+      "description": "User private profile containing watchlists and likes.",
+      "type": "object",
+      "properties": {
+        "watchlist": { "type": "array" },
+        "likedFilms": { "type": "array" }
+      },
+      "required": ["watchlist", "likedFilms"]
+    },
+    "Tip": {
+      "title": "Tip",
+      "description": "Sponsorship donation / Tip received by a film.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "filmId": { "type": "string" },
+        "filmTitle": { "type": "string" },
+        "filmmakerId": { "type": "string" },
+        "amountINR": { "type": "number" },
+        "patronName": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["id", "filmId", "filmTitle", "filmmakerId", "amountINR", "patronName", "createdAt"]
+    }
+  },
+  "firestore": {
+    "filmmakers/{filmmakerId}": {
+      "schema": "Filmmaker",
+      "description": "Collection of filmmaker profiles."
+    },
+    "films/{filmId}": {
+      "schema": "Film",
+      "description": "Collection of screened short films and series."
+    },
+    "upcoming_films/{upcomingFilmId}": {
+      "schema": "UpcomingFilm",
+      "description": "Collection of upcoming trailers and listings."
+    },
+    "users/{userId}": {
+      "schema": "User",
+      "description": "Private database records for specific users."
+    },
+    "tips/{tipId}": {
+      "schema": "Tip",
+      "description": "Collection of tip jar / sponsorship payments."
+    }
+  }
+}

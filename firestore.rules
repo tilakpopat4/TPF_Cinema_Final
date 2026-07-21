@@ -1,0 +1,136 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isVerified() && request.auth.token.email == 'tilakpopat2007@gmail.com';
+    }
+
+    function isOwner(userId) {
+      return isVerified() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Entity Validation Helpers
+    function isValidFilmmaker(fm) {
+      return fm.id is string && fm.id.size() <= 128
+        && fm.name is string && fm.name.size() <= 128
+        && fm.bio is string && fm.bio.size() <= 2000
+        && fm.avatar is string && fm.avatar.size() <= 1000
+        && fm.country is string && fm.country.size() <= 128
+        && fm.role is string && fm.role.size() <= 128
+        && (!fm.keys().contains('instagram') || (fm.instagram is string && fm.instagram.size() <= 128))
+        && (!fm.keys().contains('portfolio') || (fm.portfolio is string && fm.portfolio.size() <= 256))
+        && (!fm.keys().contains('userId') || (fm.userId is string && fm.userId.size() <= 128))
+        && (!fm.keys().contains('upiId') || (fm.upiId is string && fm.upiId.size() <= 128))
+        && (!fm.keys().contains('createdAt') || (fm.createdAt is number));
+    }
+
+    function isValidFilm(film) {
+      return film.id is string && film.id.size() <= 128
+        && film.title is string && film.title.size() <= 256
+        && film.type is string && (film.type == 'film' || film.type == 'series')
+        && film.description is string && film.description.size() <= 5000
+        && film.duration is string && film.duration.size() <= 128
+        && film.genre is list && film.genre.size() <= 10
+        && film.director is string && film.director.size() <= 128
+        && film.releaseYear is number
+        && film.posterUrl is string && film.posterUrl.size() <= 1000
+        && film.videoUrl is string && film.videoUrl.size() <= 1000
+        && film.views is number && film.views >= 0
+        && film.likes is number && film.likes >= 0
+        && film.reviews is list
+        && (!film.keys().contains('cameraUsed') || (film.cameraUsed is string && film.cameraUsed.size() <= 128))
+        && (!film.keys().contains('filmmakerId') || (film.filmmakerId is string && film.filmmakerId.size() <= 128))
+        && (!film.keys().contains('isFeatured') || (film.isFeatured is bool))
+        && (!film.keys().contains('upiId') || (film.upiId is string && film.upiId.size() <= 128))
+        && (!film.keys().contains('createdAt') || (film.createdAt is number))
+        && (!film.keys().contains('approvalStatus') || (film.approvalStatus is string && (film.approvalStatus == 'approved' || film.approvalStatus == 'pending' || film.approvalStatus == 'rejected')))
+        && (!film.keys().contains('fundsReceived') || (film.fundsReceived is number && film.fundsReceived >= 0))
+        && (!film.keys().contains('submittedByUid') || (film.submittedByUid is string && film.submittedByUid.size() <= 128));
+    }
+
+    function isValidTip(tip) {
+      return tip.id is string && tip.id.size() <= 128
+        && tip.filmId is string && tip.filmId.size() <= 128
+        && tip.filmTitle is string && tip.filmTitle.size() <= 256
+        && tip.filmmakerId is string && tip.filmmakerId.size() <= 128
+        && tip.amountINR is number && tip.amountINR >= 0
+        && tip.patronName is string && tip.patronName.size() <= 128
+        && tip.createdAt is number;
+    }
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 1. Filmmakers Collection
+    match /filmmakers/{filmmakerId} {
+      allow read, list: if isVerified();
+      allow create, update: if isVerified() && isValidId(filmmakerId) && (isAdmin() || (isOwner(filmmakerId) && isValidFilmmaker(incoming())));
+      allow delete: if isAdmin() || isOwner(filmmakerId);
+    }
+
+    // 2. Upcoming Films Collection
+    match /upcoming_films/{upcomingFilmId} {
+      allow read, list: if isVerified();
+      allow create, update, delete: if isAdmin() && isValidId(upcomingFilmId);
+    }
+
+    // 3. Users Collection
+    match /users/{userId} {
+      allow read, get: if isOwner(userId);
+      allow create, update, delete: if isOwner(userId) && isValidId(userId);
+    }
+
+    // 4. Films Collection
+    match /films/{filmId} {
+      allow read, list: if isVerified();
+      allow create: if isVerified() && isValidId(filmId) && (isAdmin() || (isValidFilm(incoming()) && incoming().submittedByUid == request.auth.uid && incoming().approvalStatus == 'pending'));
+      allow delete: if isAdmin() && isValidId(filmId);
+      
+      allow update: if isVerified() && isValidId(filmId) && (
+        isAdmin() || (
+          isValidFilm(incoming()) && (
+            // Action 1: Toggle Like (only modification to 'likes' is permitted)
+            (incoming().diff(existing()).affectedKeys().hasOnly(['likes'])) ||
+            // Action 2: Add Review (only modification to 'reviews' is permitted)
+            (incoming().diff(existing()).affectedKeys().hasOnly(['reviews'])) ||
+            // Action 3: View count increment (only modification to 'views' is permitted)
+            (incoming().diff(existing()).affectedKeys().hasOnly(['views'])) ||
+            // Action 4: Tip/Sponsorship received (only modification to 'fundsReceived' is permitted)
+            (incoming().diff(existing()).affectedKeys().hasOnly(['fundsReceived']))
+          )
+        )
+      );
+    }
+
+    // 5. Tips Collection
+    match /tips/{tipId} {
+      allow read, list: if isVerified();
+      allow create: if isVerified() && isValidId(tipId) && isValidTip(incoming());
+      allow update, delete: if false;
+    }
+  }
+}
