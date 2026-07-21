@@ -6,6 +6,7 @@ import {
   Activity, ArrowUpRight, Check
 } from 'lucide-react';
 import { Film, Filmmaker, Tip } from '../types';
+import { getDirectImageUrl } from '../lib/driveUtils';
 import SubmissionModal from './SubmissionModal';
 
 interface FilmmakerStudioProps {
@@ -494,9 +495,10 @@ export default function FilmmakerStudio({
                             {/* Title & Thumbnail */}
                             <td className="py-3 px-4 flex items-center gap-3">
                               <img
-                                src={film.posterUrl}
+                                src={getDirectImageUrl(film.posterUrl)}
                                 alt={film.title}
                                 className="w-9 h-12 object-cover rounded border border-white/10 shrink-0"
+                                style={{ objectPosition: `center ${film.posterPositionY ?? 50}%` }}
                                 referrerPolicy="no-referrer"
                               />
                               <div className="flex flex-col">

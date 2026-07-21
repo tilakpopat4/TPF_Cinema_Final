@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { 
   Film, Filmmaker, UpcomingFilm 
 } from '../types';
+import { getDirectImageUrl } from '../lib/driveUtils';
 import { 
   Film as FilmIcon, User, Film as UpcomingIcon, Plus, Edit, Trash2, 
-  Check, X, Save, Search, Settings, ShieldAlert, ArrowLeft, RefreshCw 
+  Check, X, Save, Search, Settings, ShieldAlert, ArrowLeft, RefreshCw,
+  ArrowUp, ArrowDown, Move
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -87,6 +89,7 @@ export default function AdminPanel({
       director: filmmakers[0]?.name || 'Unknown',
       releaseYear: new Date().getFullYear(),
       posterUrl: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=600&h=900&q=80',
+      posterPositionY: 50,
       videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
       cameraUsed: 'Sony A7SIII',
       filmmakerId: filmmakers[0]?.id || 'fm-1',
@@ -163,6 +166,71 @@ export default function AdminPanel({
     }
   };
 
+  // --- Interactive Poster Crop/Pan Handlers ---
+  const dragStartYRef = React.useRef<number | null>(null);
+  const dragStartValRef = React.useRef<number>(50);
+
+  const handleDragStart = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    dragStartYRef.current = e.clientY;
+    dragStartValRef.current = filmForm.posterPositionY ?? 50;
+    
+    const handleDragMove = (moveEvent: MouseEvent) => {
+      if (dragStartYRef.current !== null) {
+        const deltaY = moveEvent.clientY - dragStartYRef.current;
+        // Map height of container to drag movement percentage.
+        // Dragging down should move the image down visually (increasing posterPositionY offsets).
+        const pctChange = (deltaY / 150) * 100;
+        let newVal = Math.round(dragStartValRef.current + pctChange);
+        newVal = Math.max(0, Math.min(100, newVal));
+        setFilmForm(prev => ({ ...prev, posterPositionY: newVal }));
+      }
+    };
+
+    const handleDragEnd = () => {
+      dragStartYRef.current = null;
+      window.removeEventListener('mousemove', handleDragMove);
+      window.removeEventListener('mouseup', handleDragEnd);
+    };
+
+    window.addEventListener('mousemove', handleDragMove);
+    window.addEventListener('mouseup', handleDragEnd);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (e.touches[0]) {
+      dragStartYRef.current = e.touches[0].clientY;
+      dragStartValRef.current = filmForm.posterPositionY ?? 50;
+    }
+    
+    const handleTouchMove = (moveEvent: TouchEvent) => {
+      if (dragStartYRef.current !== null && moveEvent.touches[0]) {
+        const deltaY = moveEvent.touches[0].clientY - dragStartYRef.current;
+        const pctChange = (deltaY / 150) * 100;
+        let newVal = Math.round(dragStartValRef.current + pctChange);
+        newVal = Math.max(0, Math.min(100, newVal));
+        setFilmForm(prev => ({ ...prev, posterPositionY: newVal }));
+      }
+    };
+
+    const handleTouchEnd = () => {
+      dragStartYRef.current = null;
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
+    };
+
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd);
+  };
+
+  const adjustPan = (amount: number) => {
+    setFilmForm(prev => {
+      const current = prev.posterPositionY ?? 50;
+      const newVal = Math.max(0, Math.min(100, current + amount));
+      return { ...prev, posterPositionY: newVal };
+    });
+  };
+
   // --- Save / Submit Handlers ---
   const handleSaveFilm = (e: React.FormEvent) => {
     e.preventDefault();
@@ -187,6 +255,7 @@ export default function AdminPanel({
         director: filmForm.director || 'Unknown',
         releaseYear: Number(filmForm.releaseYear) || new Date().getFullYear(),
         posterUrl: filmForm.posterUrl || 'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=600&h=900&q=80',
+        posterPositionY: filmForm.posterPositionY ?? 50,
         videoUrl: filmForm.videoUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
         cameraUsed: filmForm.cameraUsed,
         filmmakerId: filmForm.filmmakerId || 'fm-1',
@@ -584,6 +653,101 @@ export default function AdminPanel({
                   />
                 </div>
 
+                {filmForm.posterUrl && (
+                  <div className="bg-black/40 border border-white/5 rounded p-3 flex flex-col gap-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono uppercase text-amber-500 tracking-wider flex items-center gap-1 select-none">
+                        <Move className="h-3 w-3" /> Poster Crop & Alignment
+                      </span>
+                      <span className="text-[9px] font-mono text-white/40 uppercase bg-white/5 px-2 py-0.5 rounded">
+                        Vertical Offset: {filmForm.posterPositionY ?? 50}%
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-4 items-center sm:items-start">
+                      {/* Drag-to-Pan Preview Box */}
+                      <div className="relative w-36 aspect-[2/3] bg-neutral-950 rounded overflow-hidden border border-white/10 shadow-lg group select-none shrink-0">
+                        <img 
+                          src={getDirectImageUrl(filmForm.posterUrl)} 
+                          alt="Crop preview" 
+                          className="w-full h-full object-cover pointer-events-none"
+                          style={{ objectPosition: `center ${filmForm.posterPositionY ?? 50}%` }}
+                        />
+                        
+                        {/* Drag Guidance Overlay */}
+                        <div 
+                          onMouseDown={handleDragStart}
+                          onTouchStart={handleTouchStart}
+                          className="absolute inset-0 cursor-ns-resize bg-black/10 hover:bg-black/25 flex flex-col justify-between p-2 active:bg-black/30 transition-colors"
+                        >
+                          {/* Top guide lines */}
+                          <div className="w-full border-t border-dashed border-white/20" />
+                          <div className="flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span className="bg-black/80 backdrop-blur-md text-[8px] text-white/80 font-mono px-1.5 py-0.5 rounded flex items-center gap-1 uppercase tracking-widest border border-white/10">
+                              <Move className="h-2 w-2" /> Drag to Pan
+                            </span>
+                          </div>
+                          {/* Bottom guide lines */}
+                          <div className="w-full border-b border-dashed border-white/20" />
+                        </div>
+                      </div>
+
+                      {/* Controls Area */}
+                      <div className="flex-1 flex flex-col justify-center gap-3 w-full sm:w-auto">
+                        <p className="text-[11px] text-white/60 leading-relaxed">
+                          Drag directly up/down on the poster image to pan, or use the fine-tuning options below to set the vertical crop alignment perfectly.
+                        </p>
+
+                        <div className="flex flex-col gap-1.5">
+                          <div className="flex justify-between text-[9px] font-mono text-white/40">
+                            <span>TOP (0%)</span>
+                            <span>CENTER (50%)</span>
+                            <span>BOTTOM (100%)</span>
+                          </div>
+                          <input 
+                            type="range" 
+                            min="0" 
+                            max="100" 
+                            value={filmForm.posterPositionY ?? 50} 
+                            onChange={(e) => setFilmForm({ ...filmForm, posterPositionY: Number(e.target.value) })}
+                            className="w-full accent-amber-500 bg-neutral-800 rounded appearance-none h-1.5 cursor-pointer"
+                          />
+                        </div>
+
+                        {/* Presets and Pan Actions */}
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          <button
+                            type="button"
+                            onClick={() => adjustPan(-5)}
+                            className="flex-1 min-w-[70px] bg-white/5 hover:bg-white/10 text-white/80 rounded py-1 px-2 text-[10px] font-mono flex items-center justify-center gap-1 border border-white/5 active:bg-white/15"
+                            title="Pan Up by 5%"
+                          >
+                            <ArrowUp className="h-3 w-3" /> PAN UP
+                          </button>
+                          
+                          <button
+                            type="button"
+                            onClick={() => setFilmForm(prev => ({ ...prev, posterPositionY: 50 }))}
+                            className="flex-1 min-w-[70px] bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 rounded py-1 px-2 text-[10px] font-mono flex items-center justify-center gap-1 border border-amber-500/20 active:bg-amber-500/30"
+                            title="Reset to Center"
+                          >
+                            CENTER
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => adjustPan(5)}
+                            className="flex-1 min-w-[70px] bg-white/5 hover:bg-white/10 text-white/80 rounded py-1 px-2 text-[10px] font-mono flex items-center justify-center gap-1 border border-white/5 active:bg-white/15"
+                            title="Pan Down by 5%"
+                          >
+                            <ArrowDown className="h-3 w-3" /> PAN DOWN
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] font-mono uppercase text-white/50">MP4 Video URL</label>
                   <input
@@ -884,9 +1048,10 @@ export default function AdminPanel({
                       <tr key={f.id} className="hover:bg-white/[0.02] transition-colors group">
                         <td className="py-3 px-2 flex items-start gap-2.5">
                           <img 
-                            src={f.posterUrl} 
+                            src={getDirectImageUrl(f.posterUrl)} 
                             alt="" 
                             className="w-10 h-14 object-cover rounded bg-black/40 border border-white/10 shrink-0"
+                            style={{ objectPosition: `center ${f.posterPositionY ?? 50}%` }}
                             referrerPolicy="no-referrer"
                           />
                           <div className="flex flex-col">
@@ -986,7 +1151,7 @@ export default function AdminPanel({
                       <tr key={fm.id} className="hover:bg-white/[0.02] transition-colors group">
                         <td className="py-3 px-2 flex items-center gap-2.5">
                           <img 
-                            src={fm.avatar} 
+                            src={getDirectImageUrl(fm.avatar)} 
                             alt="" 
                             className="w-9 h-9 object-cover rounded-full bg-black/40 border border-white/10 shrink-0"
                             referrerPolicy="no-referrer"

@@ -56,6 +56,7 @@ export interface Film {
   approvalStatus?: 'approved' | 'pending' | 'rejected';
   fundsReceived?: number;
   submittedByUid?: string;
+  posterPositionY?: number; // percentage (0 to 100) for vertical crop/pan
 }
 
 export interface UpcomingFilm {

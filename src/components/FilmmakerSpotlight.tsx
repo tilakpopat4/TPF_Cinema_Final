@@ -1,6 +1,7 @@
 import React from 'react';
 import { Filmmaker, Film } from '../types';
 import { Camera, MapPin, Instagram, Globe, Sparkles, Film as FilmIcon } from 'lucide-react';
+import { getDirectImageUrl } from '../lib/driveUtils';
 
 interface FilmmakerSpotlightProps {
   filmmakers: Filmmaker[];
@@ -45,7 +46,7 @@ export default function FilmmakerSpotlight({
       {/* Filmmaker Bio Header */}
       <div className="flex items-center gap-4">
         <img 
-          src={spotlightMaker.avatar} 
+          src={getDirectImageUrl(spotlightMaker.avatar)} 
           alt={spotlightMaker.name}
           className="h-12 w-12 rounded object-cover border border-white/10"
           referrerPolicy="no-referrer"

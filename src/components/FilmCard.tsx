@@ -1,6 +1,7 @@
 import React from 'react';
 import { Film, Star, Play, Tv, DollarSign } from 'lucide-react';
 import { Film as FilmType } from '../types';
+import { getDirectImageUrl } from '../lib/driveUtils';
 
 interface FilmCardProps {
   key?: React.Key;
@@ -28,9 +29,10 @@ export default function FilmCard({ film, onClick, isActive }: FilmCardProps) {
       {/* Cinematic Poster Wrapper */}
       <div className="relative aspect-[2/3] overflow-hidden w-full bg-black">
         <img 
-          src={film.posterUrl} 
+          src={getDirectImageUrl(film.posterUrl)} 
           alt={film.title} 
           className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+          style={{ objectPosition: `center ${film.posterPositionY ?? 50}%` }}
           loading="lazy"
           referrerPolicy="no-referrer"
         />

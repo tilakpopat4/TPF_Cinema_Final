@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { initialFilms, mockFilmmakers } from './data/mockFilms';
 import { Film, Review, UpcomingFilm, Filmmaker, Tip } from './types';
+import { getDirectImageUrl } from './lib/driveUtils';
 import Header from './components/Header';
 import VideoPlayer from './components/VideoPlayer';
 import FeedbackSection from './components/FeedbackSection';
@@ -825,9 +826,10 @@ export default function App() {
                     className="group cursor-pointer relative rounded overflow-hidden aspect-[2/3] border border-white/5 hover:border-amber-500/40 transition-all shadow-sm"
                   >
                     <img 
-                      src={film.posterUrl} 
+                      src={getDirectImageUrl(film.posterUrl)} 
                       alt={film.title} 
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      style={{ objectPosition: `center ${film.posterPositionY ?? 50}%` }}
                       referrerPolicy="no-referrer"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent flex flex-col justify-end p-2.5 opacity-90">
@@ -937,9 +939,10 @@ export default function App() {
                     {/* Background Graphic Art */}
                     <div className="absolute inset-0 z-0">
                       <img 
-                        src={featuredFilm.posterUrl} 
+                        src={getDirectImageUrl(featuredFilm.posterUrl)} 
                         alt={featuredFilm.title} 
-                        className="w-full h-full object-cover object-center scale-[1.02]" 
+                        className="w-full h-full object-cover scale-[1.02]" 
+                        style={{ objectPosition: `center ${featuredFilm.posterPositionY ?? 50}%` }}
                         referrerPolicy="no-referrer"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#2B2B2B] via-black/50 to-black/10 md:bg-gradient-to-r md:from-[#2B2B2B] md:via-[#2B2B2B]/60 md:to-transparent z-10" />
@@ -1044,9 +1047,10 @@ export default function App() {
                             className="min-w-[150px] sm:min-w-[180px] w-[150px] sm:w-[180px] shrink-0 group cursor-pointer relative rounded overflow-hidden aspect-[2/3] border border-white/10 hover:border-amber-500/40 transition-all shadow-sm"
                           >
                             <img 
-                              src={film.posterUrl} 
+                              src={getDirectImageUrl(film.posterUrl)} 
                               alt={film.title} 
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              style={{ objectPosition: `center ${film.posterPositionY ?? 50}%` }}
                               referrerPolicy="no-referrer"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent flex flex-col justify-end p-2.5 opacity-90">

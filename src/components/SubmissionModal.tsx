@@ -200,6 +200,7 @@ Best Regards,
       releaseYear: new Date().getFullYear(),
       posterUrl,
       videoUrl,
+      posterPositionY: 50,
       episodes: type === 'series' ? episodes.map(ep => ({ ...ep, title: ep.title.trim(), duration: ep.duration.trim(), videoUrl: ep.videoUrl.trim() })) : undefined,
       filmmakerId: `fm-${Math.random().toString(36).substr(2, 4)}`, // mock new id
       upiId: upiId.trim() || undefined,
