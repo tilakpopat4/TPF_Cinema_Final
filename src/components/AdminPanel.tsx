@@ -171,8 +171,44 @@ export default function AdminPanel({
       cameraUsed: 'Sony A7SIII',
       filmmakerId: filmmakers[0]?.id || 'fm-1',
       isFeatured: false,
-      upiId: ''
+      upiId: 'tpfcinemas@okaxis',
+      approvalStatus: 'approved'
     });
+  };
+
+  const handlePublishMasterVideoDirectly = (mv: MasterVideoFile) => {
+    const newId = `film-master-${Date.now()}`;
+    const titleFormatted = mv.fileName.replace(/\.[^/.]+$/, '').replace(/_/g, ' ');
+
+    const newFilm: Film = {
+      id: newId,
+      title: titleFormatted,
+      type: 'film',
+      description: `Master 4K film stream uploaded directly from 50GB cloud media pipeline (${mv.fileSizeFormatted}).`,
+      duration: '15m 00s',
+      genre: ['Drama', 'Indie'],
+      director: filmmakers[0]?.name || 'TPF Master Projectionist',
+      releaseYear: new Date().getFullYear(),
+      posterUrl: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=600&h=900&q=80',
+      posterPositionY: 50,
+      landscapePosterUrl: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=1200&h=675&q=80',
+      landscapePosterPositionY: 50,
+      videoUrl: mv.videoUrl,
+      cameraUsed: 'Arri Alexa 35',
+      filmmakerId: filmmakers[0]?.id || 'fm-1',
+      views: 12,
+      likes: 1,
+      reviews: [],
+      isFeatured: true,
+      upiId: 'tpfcinemas@okaxis',
+      approvalStatus: 'approved'
+    };
+
+    let updatedFilms = films.map(f => ({ ...f, isFeatured: false }));
+    updatedFilms.unshift(newFilm);
+
+    onUpdateFilms(updatedFilms);
+    alert(`"${titleFormatted}" has been published directly to the main OTT screen! Exit console or return to Home to watch it.`);
   };
 
   const startEditFilm = (film: Film) => {
@@ -335,10 +371,8 @@ export default function AdminPanel({
       alert('Please provide a Title and Director name.');
       return;
     }
-    if (!filmForm.upiId || !filmForm.upiId.trim()) {
-      alert('Sponsorship UPI ID (GPay) is required so viewers can support the filmmaker directly.');
-      return;
-    }
+
+    const assignedUpiId = (filmForm.upiId && filmForm.upiId.trim()) ? filmForm.upiId.trim() : 'tpfcinemas@okaxis';
 
     if (isAddingNew) {
       const newId = `film-${Math.random().toString(36).substr(2, 5)}`;
@@ -362,7 +396,8 @@ export default function AdminPanel({
         likes: 0,
         reviews: [],
         isFeatured: filmForm.isFeatured || false,
-        upiId: filmForm.upiId
+        upiId: assignedUpiId,
+        approvalStatus: 'approved'
       };
 
       // If set to featured, disable other film featured flags
@@ -378,6 +413,8 @@ export default function AdminPanel({
           return {
             ...f,
             ...filmForm,
+            upiId: assignedUpiId,
+            approvalStatus: filmForm.approvalStatus || 'approved',
             releaseYear: Number(filmForm.releaseYear) || f.releaseYear
           } as Film;
         }
@@ -1755,12 +1792,22 @@ export default function AdminPanel({
                       <div className="flex flex-wrap items-center gap-2 shrink-0">
                         <button
                           type="button"
+                          onClick={() => handlePublishMasterVideoDirectly(mv)}
+                          className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-black text-xs font-mono font-extrabold uppercase tracking-wider rounded shadow-lg transition-all cursor-pointer flex items-center gap-1.5 animate-pulse"
+                          title="Publish this master file instantly onto the main OTT home screen"
+                        >
+                          <Sparkles className="h-3.5 w-3.5 fill-black" />
+                          ✦ Publish to Main Screen
+                        </button>
+
+                        <button
+                          type="button"
                           onClick={() => {
                             setTestVideoUrl(mv.videoUrl);
                             setTestActive(true);
                             setTestStatus('success');
                           }}
-                          className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-black text-xs font-mono font-bold uppercase tracking-wider rounded transition-all cursor-pointer flex items-center gap-1"
+                          className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-mono font-bold uppercase tracking-wider rounded transition-all cursor-pointer flex items-center gap-1"
                         >
                           <Play className="h-3 w-3 fill-current" />
                           Test Playback
@@ -1786,13 +1833,14 @@ export default function AdminPanel({
                               cameraUsed: 'Arri Alexa 35',
                               filmmakerId: filmmakers[0]?.id || 'fm-1',
                               isFeatured: true,
+                              upiId: 'tpfcinemas@okaxis',
                               approvalStatus: 'approved'
                             });
                           }}
-                          className="px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 text-white text-xs font-mono font-bold uppercase tracking-wider rounded transition-all cursor-pointer flex items-center gap-1"
+                          className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 text-xs font-mono font-bold uppercase tracking-wider rounded transition-all cursor-pointer flex items-center gap-1"
                         >
                           <Plus className="h-3 w-3 text-amber-400" />
-                          + Add as Film
+                          Edit Details
                         </button>
 
                         <button

@@ -517,9 +517,9 @@ Best Regards,
                           Video Link (YouTube, Drive, Vimeo, or .mp4)
                         </label>
                         <input
-                          type="url"
+                          type="text"
                           required
-                          placeholder="YouTube, Google Drive, or .mp4 URL"
+                          placeholder="YouTube, Google Drive, or .mp4 / .mov URL"
                           value={ep.videoUrl}
                           onChange={(e) => {
                             const newEps = [...episodes];
@@ -658,21 +658,59 @@ Best Regards,
                   3. Film Screening File / Stream Link
                 </h3>
                 <span className="text-[9px] font-mono text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded">
-                  ✦ Supports 50GB+ Cloudflare R2 / S3 / Direct MP4 / YouTube
+                  ✦ Supports 50GB+ .MP4 / .MOV / Cloudflare R2 / S3 / YouTube
                 </span>
               </div>
 
-              <div>
-                <label className="block text-[9px] font-sans text-white/40 uppercase tracking-widest mb-1.5">Video Screener / Stream Link (YouTube, Drive, Vimeo, Cloudflare R2, or .mp4)</label>
-                <input
-                  id="submit-custom-video-input"
-                  type="url"
-                  required
-                  placeholder="Paste YouTube, Google Drive link, Cloudflare R2, or direct .mp4 address"
-                  value={customVideoUrl}
-                  onChange={(e) => setCustomVideoUrl(e.target.value)}
-                  className="w-full bg-white/5 hover:bg-white/10 text-[#F5F5F7] text-xs px-3 py-2.5 rounded border border-white/10 focus:border-amber-500/50 focus:outline-none focus:bg-white/5 transition-all font-sans"
-                />
+              <div className="flex flex-col gap-3">
+                {/* Direct local file selector */}
+                <div className="bg-white/5 p-3 rounded border border-white/10 flex flex-col gap-2">
+                  <label className="text-[9px] font-sans text-amber-400 uppercase tracking-widest font-bold flex items-center justify-between">
+                    <span>Option A: Upload .MP4 / .MOV Master Video File From Computer</span>
+                    <span className="text-[8px] font-mono text-white/40">Direct Local Playback</span>
+                  </label>
+                  
+                  <input
+                    type="file"
+                    accept=".mp4,.mov,video/mp4,video/quicktime,video/*"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        const file = e.target.files[0];
+                        const localUrl = URL.createObjectURL(file);
+                        setCustomVideoUrl(localUrl);
+                      }
+                    }}
+                    className="block w-full text-xs text-white/60 file:mr-4 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-mono file:font-bold file:bg-amber-500 file:text-black hover:file:bg-amber-400 cursor-pointer"
+                  />
+                  {customVideoUrl && customVideoUrl.startsWith('blob:') && (
+                    <div className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded flex items-center justify-between">
+                      <span>✓ Direct .MP4/.MOV file selected and attached for streaming</span>
+                      <button 
+                        type="button" 
+                        onClick={() => setCustomVideoUrl('')} 
+                        className="text-white/40 hover:text-white underline text-[9px]"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Direct URL input */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="block text-[9px] font-sans text-white/40 uppercase tracking-widest">
+                    Option B: Or Paste Streaming URL (YouTube, Drive, Vimeo, Cloudflare R2, or .mp4)
+                  </label>
+                  <input
+                    id="submit-custom-video-input"
+                    type="text"
+                    required
+                    placeholder="Paste YouTube, Google Drive link, Cloudflare R2, or direct .mp4 address"
+                    value={customVideoUrl}
+                    onChange={(e) => setCustomVideoUrl(e.target.value)}
+                    className="w-full bg-white/5 hover:bg-white/10 text-[#F5F5F7] text-xs px-3 py-2.5 rounded border border-white/10 focus:border-amber-500/50 focus:outline-none focus:bg-white/5 transition-all font-sans"
+                  />
+                </div>
               </div>
             </div>
           )}
