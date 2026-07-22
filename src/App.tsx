@@ -103,6 +103,11 @@ export default function App() {
   // Success alert states
   const [showSubmitSuccess, setShowSubmitSuccess] = useState(false);
 
+  // Set document title
+  useEffect(() => {
+    document.title = "TPF Cinemas | An OTT For Beginners";
+  }, []);
+
   // --- Real-time Firestore synchronization & Seeding ---
   useEffect(() => {
     if (!currentUser || currentUser.email !== 'tilakpopat2007@gmail.com') return;
