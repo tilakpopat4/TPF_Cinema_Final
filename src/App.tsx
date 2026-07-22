@@ -97,6 +97,7 @@ export default function App() {
   const [showSubmission, setShowSubmission] = useState(false);
   const [showManifesto, setShowManifesto] = useState(false);
   const [showTipJar, setShowTipJar] = useState(false);
+  const [showFullFeaturedDesc, setShowFullFeaturedDesc] = useState(false);
 
   // Success alert states
   const [showSubmitSuccess, setShowSubmitSuccess] = useState(false);
@@ -978,9 +979,22 @@ export default function App() {
                         <span>{featuredFilm.duration}</span>
                       </div>
 
-                      <p className="text-xs md:text-sm text-white/60 font-sans leading-relaxed max-w-lg hidden sm:block">
-                        {featuredFilm.description}
-                      </p>
+                      <div className="max-w-lg hidden sm:block">
+                        <p className={`text-xs md:text-sm text-white/70 font-sans leading-relaxed transition-all ${
+                          showFullFeaturedDesc ? '' : 'line-clamp-3'
+                        }`}>
+                          {featuredFilm.description}
+                        </p>
+                        {featuredFilm.description && featuredFilm.description.length > 130 && (
+                          <button
+                            type="button"
+                            onClick={() => setShowFullFeaturedDesc(!showFullFeaturedDesc)}
+                            className="text-[10px] font-mono text-amber-400 hover:underline mt-1 focus:outline-none flex items-center gap-1 uppercase tracking-wider font-bold"
+                          >
+                            {showFullFeaturedDesc ? 'Show Less' : 'Read More...'}
+                          </button>
+                        )}
+                      </div>
 
                       {/* Control buttons */}
                       <div className="flex flex-wrap items-center gap-2.5 mt-1 sm:mt-3">
