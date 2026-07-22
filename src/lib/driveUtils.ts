@@ -44,7 +44,7 @@ export interface VideoEmbedData {
 
 export function getVideoEmbedData(
   url: string | undefined, 
-  options: VideoEmbedOptions = { hideYouTubePlayerUI: true, autoplay: true }
+  options: VideoEmbedOptions = { autoplay: true }
 ): VideoEmbedData {
   if (!url) return { isEmbed: false, embedUrl: '', provider: 'direct' };
   const trimmed = url.trim();
@@ -57,14 +57,8 @@ export function getVideoEmbedData(
     const autoplayParam = options.autoplay !== false ? '1' : '0';
     const muteParam = options.mute ? '&mute=1' : '';
     
-    // Stealth Cinema Pipeline parameters for YouTube
-    let ytParams = `autoplay=${autoplayParam}&rel=0&modestbranding=1&iv_load_policy=3&playsinline=1&enablejsapi=1${muteParam}`;
-    if (options.hideYouTubePlayerUI) {
-      // Strips YouTube controls, title overlay, annotations & channel overlays
-      ytParams += `&controls=0&disablekb=1&fs=1&showinfo=0&autohide=1`;
-    } else {
-      ytParams += `&controls=1`;
-    }
+    // Clean, high quality YouTube embed parameters without artificial masks
+    const ytParams = `autoplay=${autoplayParam}&rel=0&modestbranding=1&playsinline=1&enablejsapi=1${muteParam}`;
 
     return {
       isEmbed: true,

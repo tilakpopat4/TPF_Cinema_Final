@@ -653,17 +653,22 @@ Best Regards,
           {/* Section 3: Film Screening File / Stream Link */}
           {type === 'film' && (
             <div className="flex flex-col gap-4 shrink-0">
-              <h3 className="text-[10px] font-sans font-bold tracking-widest text-white/40 uppercase border-b border-white/5 pb-1">
-                3. Film Screening File / Stream Link
-              </h3>
+              <div className="flex items-center justify-between border-b border-white/5 pb-1">
+                <h3 className="text-[10px] font-sans font-bold tracking-widest text-white/40 uppercase">
+                  3. Film Screening File / Stream Link
+                </h3>
+                <span className="text-[9px] font-mono text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded">
+                  ✦ Supports 50GB+ Cloudflare R2 / S3 / Direct MP4 / YouTube
+                </span>
+              </div>
 
               <div>
-                <label className="block text-[9px] font-sans text-white/40 uppercase tracking-widest mb-1.5">Video Screener / Stream Link (YouTube, Drive, Vimeo, or .mp4)</label>
+                <label className="block text-[9px] font-sans text-white/40 uppercase tracking-widest mb-1.5">Video Screener / Stream Link (YouTube, Drive, Vimeo, Cloudflare R2, or .mp4)</label>
                 <input
                   id="submit-custom-video-input"
                   type="url"
                   required
-                  placeholder="Paste YouTube, Google Drive link, or direct .mp4 address"
+                  placeholder="Paste YouTube, Google Drive link, Cloudflare R2, or direct .mp4 address"
                   value={customVideoUrl}
                   onChange={(e) => setCustomVideoUrl(e.target.value)}
                   className="w-full bg-white/5 hover:bg-white/10 text-[#F5F5F7] text-xs px-3 py-2.5 rounded border border-white/10 focus:border-amber-500/50 focus:outline-none focus:bg-white/5 transition-all font-sans"

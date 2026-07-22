@@ -221,34 +221,14 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar }: Vid
       >
         {/* Video HTML5 Tag or Dynamic Embed Player */}
         {isEmbed ? (
-          <div className="relative w-full h-full bg-black overflow-hidden">
-            <iframe
-              id="cinema-embed-player"
-              src={embedUrl}
-              className="w-full h-full border-0 bg-black"
-              allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-              allowFullScreen
-              title={film.title}
-            />
-
-            {/* YouTube Stealth Pipeline Masking Layer (Hides Top Title Bar & Bottom Branding watermark) */}
-            {provider === 'youtube' && stealthPipelineActive && (
-              <>
-                {/* Top Title Bar Masking Strip */}
-                <div 
-                  className="absolute top-0 inset-x-0 h-14 bg-gradient-to-b from-black/90 via-black/50 to-transparent pointer-events-none z-10 flex items-center justify-between px-4"
-                >
-                  <div className="flex items-center gap-2 bg-black/80 backdrop-blur-md px-2.5 py-1 rounded-full border border-amber-500/30 text-[9px] font-mono text-amber-400 font-bold uppercase tracking-wider shadow-lg">
-                    <Shield className="h-3 w-3 text-amber-400 animate-pulse" />
-                    <span>YouTube Stealth Pipeline Active</span>
-                  </div>
-                </div>
-
-                {/* Bottom Right Watermark Shield Mask */}
-                <div className="absolute bottom-1 right-1 w-20 h-10 bg-black/90 pointer-events-none z-10 rounded-tl-lg border-t border-l border-white/5" />
-              </>
-            )}
-          </div>
+          <iframe
+            id="cinema-embed-player"
+            src={embedUrl}
+            className="w-full h-full border-0 bg-black"
+            allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+            allowFullScreen
+            title={film.title}
+          />
         ) : (
           <video
             id="cinema-html5-video"
@@ -369,33 +349,8 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar }: Vid
               ) : (
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-2 bg-amber-500/10 px-2.5 py-1 rounded border border-amber-500/20 text-[9px] text-amber-400 font-mono font-bold uppercase tracking-widest">
-                    ✦ {provider === 'youtube' ? 'YouTube' : provider === 'drive' ? 'Google Drive' : 'Dynamic'} Stream
+                    ✦ {provider === 'youtube' ? 'YouTube Stream' : provider === 'drive' ? 'Google Drive Stream' : provider === 'vimeo' ? 'Vimeo Stream' : 'Cinema Stream'}
                   </div>
-
-                  {provider === 'youtube' && (
-                    <button
-                      type="button"
-                      onClick={() => setStealthPipelineActive(!stealthPipelineActive)}
-                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded border text-[9px] font-mono font-bold tracking-wider transition-all cursor-pointer ${
-                        stealthPipelineActive
-                          ? 'bg-amber-500/20 text-amber-400 border-amber-500/30 hover:bg-amber-500/30'
-                          : 'bg-white/5 text-white/50 border-white/10 hover:text-white'
-                      }`}
-                      title="Toggle YouTube Stealth Pipeline (Hides YouTube UI & Branding)"
-                    >
-                      {stealthPipelineActive ? (
-                        <>
-                          <Shield className="h-3 w-3 text-amber-400" />
-                          <span>STEALTH UI: HIDDEN</span>
-                        </>
-                      ) : (
-                        <>
-                          <ShieldOff className="h-3 w-3 text-white/40" />
-                          <span>SHOW YT PLAYER</span>
-                        </>
-                      )}
-                    </button>
-                  )}
                 </div>
               )}
 
