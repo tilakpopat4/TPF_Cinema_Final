@@ -28,22 +28,49 @@ export function getDirectImageUrl(url: string | undefined): string {
   return trimmed;
 }
 
+export interface VideoEmbedOptions {
+  hideYouTubePlayerUI?: boolean;
+  autoplay?: boolean;
+  mute?: boolean;
+  controls?: boolean;
+}
+
 export interface VideoEmbedData {
   isEmbed: boolean;
   embedUrl: string;
+  provider?: 'youtube' | 'drive' | 'vimeo' | 'direct';
+  videoId?: string;
 }
 
-export function getVideoEmbedData(url: string | undefined): VideoEmbedData {
-  if (!url) return { isEmbed: false, embedUrl: '' };
+export function getVideoEmbedData(
+  url: string | undefined, 
+  options: VideoEmbedOptions = { hideYouTubePlayerUI: true, autoplay: true }
+): VideoEmbedData {
+  if (!url) return { isEmbed: false, embedUrl: '', provider: 'direct' };
   const trimmed = url.trim();
 
   // 1. YouTube Matches
   const ytWatchRegex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/;
   const ytMatch = trimmed.match(ytWatchRegex);
   if (ytMatch && ytMatch[1]) {
+    const videoId = ytMatch[1];
+    const autoplayParam = options.autoplay !== false ? '1' : '0';
+    const muteParam = options.mute ? '&mute=1' : '';
+    
+    // Stealth Cinema Pipeline parameters for YouTube
+    let ytParams = `autoplay=${autoplayParam}&rel=0&modestbranding=1&iv_load_policy=3&playsinline=1&enablejsapi=1${muteParam}`;
+    if (options.hideYouTubePlayerUI) {
+      // Strips YouTube controls, title overlay, annotations & channel overlays
+      ytParams += `&controls=0&disablekb=1&fs=1&showinfo=0&autohide=1`;
+    } else {
+      ytParams += `&controls=1`;
+    }
+
     return {
       isEmbed: true,
-      embedUrl: `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1&rel=0`
+      embedUrl: `https://www.youtube.com/embed/${videoId}?${ytParams}`,
+      provider: 'youtube',
+      videoId
     };
   }
 
@@ -61,7 +88,9 @@ export function getVideoEmbedData(url: string | undefined): VideoEmbedData {
   if (gdMatch && gdMatch[1]) {
     return {
       isEmbed: true,
-      embedUrl: `https://drive.google.com/file/d/${gdMatch[1]}/preview`
+      embedUrl: `https://drive.google.com/file/d/${gdMatch[1]}/preview`,
+      provider: 'drive',
+      videoId: gdMatch[1]
     };
   }
 
@@ -69,12 +98,16 @@ export function getVideoEmbedData(url: string | undefined): VideoEmbedData {
   const vimeoRegex = /(?:vimeo\.com\/|player\.vimeo\.com\/video\/)([0-9]+)/;
   const vimeoMatch = trimmed.match(vimeoRegex);
   if (vimeoMatch && vimeoMatch[1]) {
+    const videoId = vimeoMatch[1];
+    const autoplayParam = options.autoplay !== false ? '1' : '0';
     return {
       isEmbed: true,
-      embedUrl: `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=1`
+      embedUrl: `https://player.vimeo.com/video/${videoId}?autoplay=${autoplayParam}&byline=0&portrait=0&title=0`,
+      provider: 'vimeo',
+      videoId
     };
   }
 
-  return { isEmbed: false, embedUrl: trimmed };
+  return { isEmbed: false, embedUrl: trimmed, provider: 'direct' };
 }
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, X, Calendar, Film, ExternalLink } from 'lucide-react';
+import { Play, X, Calendar, Film, ExternalLink, Shield, ShieldOff } from 'lucide-react';
 import { UpcomingFilm } from '../types';
 import { getDirectImageUrl, getVideoEmbedData } from '../lib/driveUtils';
 
@@ -12,8 +12,9 @@ export default function UpcomingMovies({ upcomingList }: UpcomingMoviesProps) {
   const [lightboxVideo, setLightboxVideo] = useState<string | null>(null);
   const [lightboxTitle, setLightboxTitle] = useState<string>('');
   const [videoError, setVideoError] = useState(false);
+  const [stealthPipeline, setStealthPipeline] = useState(true);
 
-  const embedData = lightboxVideo ? getVideoEmbedData(lightboxVideo) : { isEmbed: false, embedUrl: '' };
+  const embedData = lightboxVideo ? getVideoEmbedData(lightboxVideo, { hideYouTubePlayerUI: stealthPipeline }) : { isEmbed: false, embedUrl: '', provider: 'direct' };
 
   return (
     <div id="upcoming-movies-section" className="bg-[#09090b] p-6 rounded-xl border border-white/5 shadow-2xl relative overflow-hidden">
@@ -122,6 +123,31 @@ export default function UpcomingMovies({ upcomingList }: UpcomingMoviesProps) {
                   <span className="text-xs font-bold text-[#F5F5F7] truncate max-w-xs">{lightboxTitle}</span>
                 </div>
                 <div className="flex items-center gap-2">
+                  {embedData.provider === 'youtube' && (
+                    <button
+                      type="button"
+                      onClick={() => setStealthPipeline(!stealthPipeline)}
+                      className={`px-2 py-1 rounded text-[9px] font-mono font-bold flex items-center gap-1 border transition-all ${
+                        stealthPipeline
+                          ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                          : 'bg-white/5 text-white/50 border-white/10 hover:text-white'
+                      }`}
+                      title="Toggle YouTube Stealth Pipeline (Hides YouTube UI & Branding)"
+                    >
+                      {stealthPipeline ? (
+                        <>
+                          <Shield className="h-3 w-3 text-amber-400" />
+                          <span>STEALTH UI: ON</span>
+                        </>
+                      ) : (
+                        <>
+                          <ShieldOff className="h-3 w-3 text-white/40" />
+                          <span>SHOW YT PLAYER</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+
                   <a
                     href={lightboxVideo}
                     target="_blank"
@@ -141,15 +167,29 @@ export default function UpcomingMovies({ upcomingList }: UpcomingMoviesProps) {
               </div>
 
               {/* Player container (handles YouTube, Google Drive, Vimeo, and direct MP4) */}
-              <div className="aspect-video relative bg-black flex items-center justify-center">
+              <div className="aspect-video relative bg-black flex items-center justify-center overflow-hidden">
                 {embedData.isEmbed ? (
-                  <iframe
-                    src={embedData.embedUrl}
-                    title={lightboxTitle}
-                    className="w-full h-full border-0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen
-                  />
+                  <div className="relative w-full h-full">
+                    <iframe
+                      src={embedData.embedUrl}
+                      title={lightboxTitle}
+                      className="w-full h-full border-0 bg-black"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                    />
+
+                    {/* YouTube Stealth Pipeline Top/Bottom Masking Strips */}
+                    {embedData.provider === 'youtube' && stealthPipeline && (
+                      <>
+                        <div className="absolute top-0 inset-x-0 h-12 bg-gradient-to-b from-black/90 via-black/40 to-transparent pointer-events-none z-10 flex items-center justify-between px-3">
+                          <span className="text-[8px] font-mono text-amber-400/80 bg-black/80 px-2 py-0.5 rounded border border-amber-500/20 uppercase tracking-widest">
+                            YouTube Stealth Pipeline Active
+                          </span>
+                        </div>
+                        <div className="absolute bottom-1 right-1 w-20 h-10 bg-black/90 pointer-events-none z-10 rounded-tl border-t border-l border-white/5" />
+                      </>
+                    )}
+                  </div>
                 ) : (
                   <video 
                     src={lightboxVideo} 

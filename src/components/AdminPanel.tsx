@@ -1151,9 +1151,14 @@ export default function AdminPanel({
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-mono uppercase text-amber-400 font-bold">
-                    Trailer Video URL (YouTube, Google Drive, Vimeo, or MP4)
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-mono uppercase text-amber-400 font-bold">
+                      Trailer Video URL (YouTube, Google Drive, Vimeo, or MP4)
+                    </label>
+                    <span className="text-[9px] font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                      🛡️ YouTube Stealth Pipeline Enabled
+                    </span>
+                  </div>
                   <input
                     type="url"
                     value={upcomingForm.videoUrl || ''}
@@ -1161,6 +1166,9 @@ export default function AdminPanel({
                     className="bg-black border border-white/10 p-2 rounded text-white focus:outline-none focus:border-amber-500/50"
                     placeholder="https://www.youtube.com/watch?v=... or https://drive.google.com/file/d/..."
                   />
+                  <p className="text-[10px] text-white/40 font-mono">
+                    ✦ YouTube Stealth Pipeline strips YouTube controls, logos, and external recommendations to provide a clean cinema playback experience.
+                  </p>
                 </div>
 
                 <div className="flex flex-col gap-1.5">

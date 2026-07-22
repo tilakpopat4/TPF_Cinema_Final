@@ -2,9 +2,11 @@ import React, { useRef, useState, useEffect } from 'react';
 import { 
   Play, Pause, Volume2, VolumeX, Maximize, Minimize, 
   RotateCcw, Sliders, Camera, DollarSign, ExternalLink, 
-  Heart, Flame, Gift, Star, Eye, ThumbsUp, AlertCircle
+  Heart, Flame, Gift, Star, Eye, ThumbsUp, AlertCircle,
+  Shield, ShieldOff, EyeOff
 } from 'lucide-react';
 import { Film } from '../types';
+import { getVideoEmbedData } from '../lib/driveUtils';
 
 interface VideoPlayerProps {
   film: Film;
@@ -29,6 +31,9 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar }: Vid
   const [isLightsOff, setIsLightsOff] = useState(false);
   const [activeEpisodeIdx, setActiveEpisodeIdx] = useState(0);
   const [hasError, setHasError] = useState(false);
+  
+  // YouTube Stealth Pipeline: Hides YouTube UI, title bars, and branding
+  const [stealthPipelineActive, setStealthPipelineActive] = useState(true);
 
   // Reset active episode when changing film
   useEffect(() => {
@@ -39,55 +44,12 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar }: Vid
     ? film.episodes[activeEpisodeIdx].videoUrl
     : film.videoUrl;
 
-  // Helper to parse dynamic embedded links (Google Drive, YouTube, Vimeo)
-  const getEmbedData = (url: string) => {
-    if (!url) return { isEmbed: false, embedUrl: '' };
-    const trimmed = url.trim();
+  const embedData = getVideoEmbedData(currentVideoUrl, {
+    hideYouTubePlayerUI: stealthPipelineActive,
+    autoplay: true
+  });
 
-    // 1. YouTube Matches
-    const ytWatchRegex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/;
-    const ytMatch = trimmed.match(ytWatchRegex);
-    if (ytMatch && ytMatch[1]) {
-      return {
-        isEmbed: true,
-        embedUrl: `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1&rel=0`
-      };
-    }
-
-    // 2. Google Drive Matches
-    const gdFileRegex = /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/;
-    const gdOpenRegex = /drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/;
-    
-    const gdFileMatch = trimmed.match(gdFileRegex);
-    if (gdFileMatch && gdFileMatch[1]) {
-      return {
-        isEmbed: true,
-        embedUrl: `https://drive.google.com/file/d/${gdFileMatch[1]}/preview`
-      };
-    }
-    
-    const gdOpenMatch = trimmed.match(gdOpenRegex);
-    if (gdOpenMatch && gdOpenMatch[1]) {
-      return {
-        isEmbed: true,
-        embedUrl: `https://drive.google.com/file/d/${gdOpenMatch[1]}/preview`
-      };
-    }
-
-    // 3. Vimeo Matches
-    const vimeoRegex = /(?:vimeo\.com\/|player\.vimeo\.com\/video\/)([0-9]+)/;
-    const vimeoMatch = trimmed.match(vimeoRegex);
-    if (vimeoMatch && vimeoMatch[1]) {
-      return {
-        isEmbed: true,
-        embedUrl: `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=1`
-      };
-    }
-
-    return { isEmbed: false, embedUrl: trimmed };
-  };
-
-  const { isEmbed, embedUrl } = getEmbedData(currentVideoUrl);
+  const { isEmbed, embedUrl, provider } = embedData;
 
   // Auto-play when video URL changes
   useEffect(() => {
@@ -259,14 +221,34 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar }: Vid
       >
         {/* Video HTML5 Tag or Dynamic Embed Player */}
         {isEmbed ? (
-          <iframe
-            id="cinema-embed-player"
-            src={embedUrl}
-            className="w-full h-full border-0 bg-black"
-            allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-            allowFullScreen
-            title={film.title}
-          />
+          <div className="relative w-full h-full bg-black overflow-hidden">
+            <iframe
+              id="cinema-embed-player"
+              src={embedUrl}
+              className="w-full h-full border-0 bg-black"
+              allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+              allowFullScreen
+              title={film.title}
+            />
+
+            {/* YouTube Stealth Pipeline Masking Layer (Hides Top Title Bar & Bottom Branding watermark) */}
+            {provider === 'youtube' && stealthPipelineActive && (
+              <>
+                {/* Top Title Bar Masking Strip */}
+                <div 
+                  className="absolute top-0 inset-x-0 h-14 bg-gradient-to-b from-black/90 via-black/50 to-transparent pointer-events-none z-10 flex items-center justify-between px-4"
+                >
+                  <div className="flex items-center gap-2 bg-black/80 backdrop-blur-md px-2.5 py-1 rounded-full border border-amber-500/30 text-[9px] font-mono text-amber-400 font-bold uppercase tracking-wider shadow-lg">
+                    <Shield className="h-3 w-3 text-amber-400 animate-pulse" />
+                    <span>YouTube Stealth Pipeline Active</span>
+                  </div>
+                </div>
+
+                {/* Bottom Right Watermark Shield Mask */}
+                <div className="absolute bottom-1 right-1 w-20 h-10 bg-black/90 pointer-events-none z-10 rounded-tl-lg border-t border-l border-white/5" />
+              </>
+            )}
+          </div>
         ) : (
           <video
             id="cinema-html5-video"
@@ -385,8 +367,35 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar }: Vid
                   </div>
                 </>
               ) : (
-                <div className="flex items-center gap-2 bg-amber-500/10 px-2.5 py-0.5 rounded border border-amber-500/20 text-[9px] text-amber-500 font-mono font-bold uppercase tracking-widest">
-                  ✦ Dynamic Embed Stream
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 bg-amber-500/10 px-2.5 py-1 rounded border border-amber-500/20 text-[9px] text-amber-400 font-mono font-bold uppercase tracking-widest">
+                    ✦ {provider === 'youtube' ? 'YouTube' : provider === 'drive' ? 'Google Drive' : 'Dynamic'} Stream
+                  </div>
+
+                  {provider === 'youtube' && (
+                    <button
+                      type="button"
+                      onClick={() => setStealthPipelineActive(!stealthPipelineActive)}
+                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded border text-[9px] font-mono font-bold tracking-wider transition-all cursor-pointer ${
+                        stealthPipelineActive
+                          ? 'bg-amber-500/20 text-amber-400 border-amber-500/30 hover:bg-amber-500/30'
+                          : 'bg-white/5 text-white/50 border-white/10 hover:text-white'
+                      }`}
+                      title="Toggle YouTube Stealth Pipeline (Hides YouTube UI & Branding)"
+                    >
+                      {stealthPipelineActive ? (
+                        <>
+                          <Shield className="h-3 w-3 text-amber-400" />
+                          <span>STEALTH UI: HIDDEN</span>
+                        </>
+                      ) : (
+                        <>
+                          <ShieldOff className="h-3 w-3 text-white/40" />
+                          <span>SHOW YT PLAYER</span>
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
               )}
 

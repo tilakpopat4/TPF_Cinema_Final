@@ -939,10 +939,16 @@ export default function App() {
                     {/* Background Graphic Art */}
                     <div className="absolute inset-0 z-0">
                       <img 
-                        src={getDirectImageUrl(featuredFilm.posterUrl)} 
+                        src={getDirectImageUrl(featuredFilm.landscapePosterUrl || featuredFilm.posterUrl)} 
                         alt={featuredFilm.title} 
                         className="w-full h-full object-cover scale-[1.02]" 
-                        style={{ objectPosition: `center ${featuredFilm.posterPositionY ?? 50}%` }}
+                        style={{ 
+                          objectPosition: `center ${
+                            featuredFilm.landscapePosterUrl 
+                              ? (featuredFilm.landscapePosterPositionY ?? 50) 
+                              : (featuredFilm.posterPositionY ?? 50)
+                          }%` 
+                        }}
                         referrerPolicy="no-referrer"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#2B2B2B] via-black/50 to-black/10 md:bg-gradient-to-r md:from-[#2B2B2B] md:via-[#2B2B2B]/60 md:to-transparent z-10" />
