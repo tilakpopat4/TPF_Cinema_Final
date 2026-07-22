@@ -744,7 +744,7 @@ export default function App() {
       />
 
       {/* Main cinematic canvas layout container */}
-      <main className="flex-1 w-full px-4 md:px-12 lg:px-16 py-8 flex flex-col gap-10">
+      <main className="flex-1 w-full px-3 sm:px-6 md:px-12 lg:px-16 py-4 sm:py-8 pb-24 md:pb-8 flex flex-col gap-6 sm:gap-10">
         
         {/* Banner Success Announcement */}
         {showSubmitSuccess && (
@@ -855,7 +855,7 @@ export default function App() {
         ) : (
           
           /* --- BROWSABLE PREMIUM OTT HOME STATE --- */
-          <div className="flex flex-col gap-10">
+          <div className="flex flex-col gap-8 sm:gap-10">
 
             {/* IF SEARCH/FILTER ACTIVE, SHOW DISCOVERY SEARCH RESULTS IN GRID */}
             {isFilterOrSearchActive ? (
@@ -925,7 +925,7 @@ export default function App() {
                     ) : null}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
                     {filteredFilms.map((film) => (
                       <FilmCard 
                         key={film.id}
@@ -941,11 +941,11 @@ export default function App() {
             ) : (
               
               /* NO ACTIVE FILTERS: STANDARD PREMIUM OTT RECOMMENDATIONS ROWS */
-              <div className="flex flex-col gap-10">
+              <div className="flex flex-col gap-8 sm:gap-10">
 
                 {/* A. GIANT DYNAMIC HERO BANNER */}
                 {featuredFilm && (
-                  <div className="relative overflow-hidden rounded bg-black border border-white/10 aspect-[16/9] md:aspect-[21/9] flex items-center shadow-2xl">
+                  <div className="relative overflow-hidden rounded-xl bg-black border border-white/10 min-h-[420px] sm:min-h-[460px] md:min-h-0 md:aspect-[21/9] flex items-end shadow-2xl p-4 sm:p-6 md:p-10">
                     {/* Background Graphic Art */}
                     <div className="absolute inset-0 z-0">
                       <img 
@@ -961,36 +961,36 @@ export default function App() {
                         }}
                         referrerPolicy="no-referrer"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#2B2B2B] via-black/50 to-black/10 md:bg-gradient-to-r md:from-[#2B2B2B] md:via-[#2B2B2B]/60 md:to-transparent z-10" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#161618] via-[#161618]/85 to-black/20 md:bg-gradient-to-r md:from-[#161618] md:via-[#161618]/80 md:to-transparent z-10" />
                     </div>
 
                     {/* Content Section */}
-                    <div className="relative z-20 max-w-2xl px-6 md:px-12 flex flex-col gap-3 md:gap-4 select-none">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[9px] font-mono font-bold uppercase tracking-widest bg-amber-500 text-black px-2 py-0.5 rounded">
+                    <div className="relative z-20 w-full max-w-2xl flex flex-col gap-2.5 sm:gap-3.5 select-none">
+                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        <span className="text-[8px] sm:text-[9px] font-mono font-bold uppercase tracking-widest bg-amber-500 text-black px-2 py-0.5 rounded">
                           CINEMATIC FEATURED
                         </span>
-                        <span className="text-[9px] font-mono font-bold uppercase tracking-widest bg-white/10 text-amber-500 px-2 py-0.5 rounded border border-amber-500/15 backdrop-blur-sm">
+                        <span className="text-[8px] sm:text-[9px] font-mono font-bold uppercase tracking-widest bg-white/10 text-amber-500 px-2 py-0.5 rounded border border-amber-500/20 backdrop-blur-sm">
                           ★ RECOMMENDED SCREENING
                         </span>
                       </div>
 
-                      <h2 className="text-xl sm:text-3xl md:text-5xl font-extrabold tracking-tight text-[#F5F5F7] uppercase font-display leading-none">
+                      <h2 className="text-2xl sm:text-3xl md:text-5xl font-extrabold tracking-tight text-[#F5F5F7] uppercase font-display leading-tight drop-shadow-md">
                         {featuredFilm.title}
                       </h2>
 
                       {/* Metadata row */}
-                      <div className="flex flex-wrap items-center gap-3 text-[10px] font-mono text-white/50">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[10px] font-mono text-white/60">
                         <span>{featuredFilm.releaseYear}</span>
                         <span className="text-white/20">•</span>
-                        <span className="text-amber-500 uppercase font-bold">{featuredFilm.type === 'series' ? 'Web Series' : 'Short Film'}</span>
+                        <span className="text-amber-400 uppercase font-bold">{featuredFilm.type === 'series' ? 'Web Series' : 'Short Film'}</span>
                         <span className="text-white/20">•</span>
                         <span>{featuredFilm.duration}</span>
                       </div>
 
-                      <div className="max-w-lg hidden sm:block">
-                        <p className={`text-xs md:text-sm text-white/70 font-sans leading-relaxed transition-all ${
-                          showFullFeaturedDesc ? '' : 'line-clamp-3'
+                      <div className="max-w-lg">
+                        <p className={`text-xs md:text-sm text-white/80 font-sans leading-relaxed transition-all ${
+                          showFullFeaturedDesc ? '' : 'line-clamp-2 md:line-clamp-3'
                         }`}>
                           {featuredFilm.description}
                         </p>
@@ -998,7 +998,7 @@ export default function App() {
                           <button
                             type="button"
                             onClick={() => setShowFullFeaturedDesc(!showFullFeaturedDesc)}
-                            className="text-[10px] font-mono text-amber-400 hover:underline mt-1 focus:outline-none flex items-center gap-1 uppercase tracking-wider font-bold"
+                            className="text-[10px] font-mono text-amber-400 hover:underline mt-0.5 focus:outline-none flex items-center gap-1 uppercase tracking-wider font-bold"
                           >
                             {showFullFeaturedDesc ? 'Show Less' : 'Read More...'}
                           </button>
@@ -1006,11 +1006,11 @@ export default function App() {
                       </div>
 
                       {/* Control buttons */}
-                      <div className="flex flex-wrap items-center gap-2.5 mt-1 sm:mt-3">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 mt-1 sm:mt-2">
                         <button
                           id="hero-watch-btn"
                           onClick={() => handleSelectFilm(featuredFilm)}
-                          className="flex items-center gap-2 px-5 py-2 md:py-2.5 bg-amber-500 hover:bg-amber-400 text-black rounded text-xs font-bold transition-all cursor-pointer uppercase tracking-widest"
+                          className="flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 bg-amber-500 hover:bg-amber-400 text-black rounded-lg text-xs font-extrabold transition-all cursor-pointer uppercase tracking-wider shadow-lg active:scale-95"
                         >
                           <Play className="h-4 w-4 fill-current" />
                           <span>Watch Now</span>
@@ -1019,10 +1019,10 @@ export default function App() {
                         <button
                           id="hero-list-btn"
                           onClick={() => handleWatchlistToggle(featuredFilm.id)}
-                          className={`flex items-center gap-1.5 px-4 py-2 md:py-2.5 rounded border text-xs font-bold transition-all cursor-pointer uppercase tracking-widest ${
+                          className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-lg border text-xs font-bold transition-all cursor-pointer uppercase tracking-wider active:scale-95 ${
                             watchlist.includes(featuredFilm.id)
-                              ? 'bg-amber-500/10 text-amber-500 border-amber-500/30'
-                              : 'bg-white/5 text-white/70 border-white/10 hover:text-white hover:bg-white/10'
+                              ? 'bg-amber-500/20 text-amber-400 border-amber-500/40'
+                              : 'bg-white/10 text-white border-white/20 hover:bg-white/20'
                           }`}
                         >
                           {watchlist.includes(featuredFilm.id) ? (
@@ -1044,7 +1044,7 @@ export default function App() {
                             setSelectedActiveFilm(featuredFilm);
                             setShowTipJar(true);
                           }}
-                          className="flex items-center gap-1.5 px-4 py-2 md:py-2.5 bg-rose-500/5 hover:bg-rose-500/15 text-rose-400 border border-rose-500/20 rounded text-xs font-bold transition-all cursor-pointer uppercase tracking-widest"
+                          className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 sm:py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded-lg text-xs font-bold transition-all cursor-pointer uppercase tracking-wider active:scale-95"
                         >
                           <Heart className="h-4 w-4 fill-current" />
                           <span>Sponsor</span>
@@ -1053,11 +1053,11 @@ export default function App() {
 
                       {/* Featured Series Listed Episode Options */}
                       {featuredFilm.type === 'series' && (
-                        <div className="flex flex-col gap-2 mt-2 pt-2 border-t border-white/10">
+                        <div className="flex flex-col gap-1.5 mt-1 pt-2 border-t border-white/10 w-full">
                           <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-amber-400 flex items-center gap-1.5">
                             <Tv className="h-3 w-3" /> Select Episode To Play:
                           </span>
-                          <div className="flex flex-wrap gap-1.5">
+                          <div className="flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden py-1 w-full">
                             {(featuredFilm.episodes && featuredFilm.episodes.length > 0 
                               ? featuredFilm.episodes 
                               : [{ id: `${featuredFilm.id}-ep1`, title: 'Episode 1', duration: featuredFilm.duration || '10m', videoUrl: featuredFilm.videoUrl }]
@@ -1066,7 +1066,7 @@ export default function App() {
                                 key={ep.id || idx}
                                 type="button"
                                 onClick={() => handleSelectFilm(featuredFilm, idx)}
-                                className="px-3 py-1.5 bg-black/80 hover:bg-amber-500 hover:text-black border border-white/20 hover:border-amber-400 text-white rounded text-[10px] font-mono font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow"
+                                className="px-3 py-1.5 bg-black/80 hover:bg-amber-500 hover:text-black border border-white/20 hover:border-amber-400 text-white rounded text-[10px] font-mono font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 shadow"
                               >
                                 <Play className="h-2.5 w-2.5 fill-current" />
                                 <span>Ep {idx + 1}: {ep.title}</span>
