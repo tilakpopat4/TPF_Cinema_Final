@@ -7,14 +7,22 @@ interface FilmCardProps {
   key?: React.Key;
   film: FilmType;
   onClick: () => void;
+  onSelectEpisode?: (film: FilmType, episodeIndex: number) => void;
   isActive: boolean;
 }
 
-export default function FilmCard({ film, onClick, isActive }: FilmCardProps) {
+export default function FilmCard({ film, onClick, onSelectEpisode, isActive }: FilmCardProps) {
   // Compute overall average rating
   const averageRating = film.reviews.length > 0 
     ? parseFloat((film.reviews.reduce((acc, curr) => acc + curr.rating, 0) / film.reviews.length).toFixed(1))
     : 0;
+
+  // Normalized episodes list for series
+  const episodes = (film.type === 'series')
+    ? (film.episodes && film.episodes.length > 0)
+        ? film.episodes
+        : [{ id: `${film.id}-ep1`, title: 'Episode 1', duration: film.duration || '10m', videoUrl: film.videoUrl }]
+    : [];
 
   return (
     <div 
@@ -48,16 +56,14 @@ export default function FilmCard({ film, onClick, isActive }: FilmCardProps) {
         <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
           {/* Film vs Series Format */}
           {film.type === 'series' ? (
-            <span className="flex items-center gap-1 text-[8px] font-mono font-bold uppercase tracking-widest bg-black/85 text-rose-400 px-2 py-0.5 rounded border border-rose-500/20 backdrop-blur-sm">
-              Series
+            <span className="flex items-center gap-1 text-[8px] font-mono font-bold uppercase tracking-widest bg-rose-950/90 text-rose-300 px-2 py-0.5 rounded border border-rose-500/30 backdrop-blur-sm shadow">
+              <Tv className="h-2.5 w-2.5 text-rose-400" /> Series ({episodes.length} Ep)
             </span>
           ) : (
             <span className="flex items-center gap-1 text-[8px] font-mono font-bold uppercase tracking-widest bg-black/85 text-amber-500 px-2 py-0.5 rounded border border-amber-500/20 backdrop-blur-sm">
               Short Film
             </span>
           )}
-
-
         </div>
 
         {/* Runtime Float bottom badge */}
@@ -67,7 +73,7 @@ export default function FilmCard({ film, onClick, isActive }: FilmCardProps) {
       </div>
 
       {/* Film Metadata details */}
-      <div className="p-3.5 flex flex-col gap-1">
+      <div className="p-3.5 flex flex-col gap-1.5">
         <div className="flex items-center justify-between gap-2">
           <h4 className="text-xs font-bold text-[#F5F5F7] group-hover:text-amber-500 transition-colors truncate w-full">
             {film.title}
@@ -86,7 +92,37 @@ export default function FilmCard({ film, onClick, isActive }: FilmCardProps) {
           Directed by {film.director}
         </p>
 
-        <div className="flex items-center justify-between text-[9px] font-mono text-white/30 mt-2 border-t border-white/5 pt-2">
+        {/* Listed options to view any specific episode for series */}
+        {film.type === 'series' && episodes.length > 0 && (
+          <div className="mt-1 pt-2 border-t border-white/10 flex flex-col gap-1">
+            <span className="text-[8px] font-mono font-bold uppercase tracking-widest text-amber-400 flex items-center justify-between">
+              <span>Select Episode:</span>
+              <span className="text-white/40">{episodes.length} Total</span>
+            </span>
+            <div className="flex flex-wrap gap-1">
+              {episodes.map((ep, idx) => (
+                <button
+                  key={ep.id || idx}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onSelectEpisode) {
+                      onSelectEpisode(film, idx);
+                    } else {
+                      onClick();
+                    }
+                  }}
+                  className="px-2 py-0.5 bg-white/5 hover:bg-amber-500 hover:text-black border border-white/10 hover:border-amber-400 text-white/80 rounded text-[9px] font-mono font-bold transition-all cursor-pointer truncate max-w-full"
+                  title={`Play Ep ${idx + 1}: ${ep.title}`}
+                >
+                  Ep {idx + 1}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between text-[9px] font-mono text-white/30 mt-1 border-t border-white/5 pt-2">
           <span>{film.releaseYear}</span>
           <span className="text-[8px] bg-white/5 border border-white/10 px-1.5 py-0.5 rounded text-white/50 hover:text-[#F5F5F7] transition-colors">
             {film.reviews.length} review{film.reviews.length !== 1 ? 's' : ''}

@@ -82,6 +82,7 @@ export default function App() {
   const [tips, setTips] = useState<Tip[]>([]);
 
   const [selectedActiveFilm, setSelectedActiveFilm] = useState<Film | null>(null);
+  const [selectedEpisodeIndex, setSelectedEpisodeIndex] = useState<number>(0);
   const [viewState, setViewState] = useState<'home' | 'player' | 'admin' | 'filmmaker-studio'>('home');
   
   // Filters & Search
@@ -583,9 +584,10 @@ export default function App() {
     }
   };
 
-  const handleSelectFilm = async (film: Film) => {
+  const handleSelectFilm = async (film: Film, episodeIndex: number = 0) => {
     try {
       setSelectedActiveFilm(film);
+      setSelectedEpisodeIndex(episodeIndex);
       setViewState('player');
 
       const filmDocRef = doc(db, 'films', film.id);
@@ -794,6 +796,7 @@ export default function App() {
                 {/* Advanced Interactive Player */}
                 <VideoPlayer 
                   film={activeFilm} 
+                  initialEpisodeIndex={selectedEpisodeIndex}
                   onLike={handleLikeToggle}
                   isLiked={likedFilms.includes(activeFilm.id)}
                   onOpenTipJar={() => setShowTipJar(true)}
@@ -923,6 +926,7 @@ export default function App() {
                         key={film.id}
                         film={film}
                         onClick={() => handleSelectFilm(film)}
+                        onSelectEpisode={(f, idx) => handleSelectFilm(f, idx)}
                         isActive={activeFilm ? activeFilm.id === film.id : false}
                       />
                     ))}
@@ -1041,6 +1045,32 @@ export default function App() {
                           <span>Sponsor</span>
                         </button>
                       </div>
+
+                      {/* Featured Series Listed Episode Options */}
+                      {featuredFilm.type === 'series' && (
+                        <div className="flex flex-col gap-2 mt-2 pt-2 border-t border-white/10">
+                          <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-amber-400 flex items-center gap-1.5">
+                            <Tv className="h-3 w-3" /> Select Episode To Play:
+                          </span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {(featuredFilm.episodes && featuredFilm.episodes.length > 0 
+                              ? featuredFilm.episodes 
+                              : [{ id: `${featuredFilm.id}-ep1`, title: 'Episode 1', duration: featuredFilm.duration || '10m', videoUrl: featuredFilm.videoUrl }]
+                            ).map((ep, idx) => (
+                              <button
+                                key={ep.id || idx}
+                                type="button"
+                                onClick={() => handleSelectFilm(featuredFilm, idx)}
+                                className="px-3 py-1.5 bg-black/80 hover:bg-amber-500 hover:text-black border border-white/20 hover:border-amber-400 text-white rounded text-[10px] font-mono font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow"
+                              >
+                                <Play className="h-2.5 w-2.5 fill-current" />
+                                <span>Ep {idx + 1}: {ep.title}</span>
+                                <span className="opacity-60 text-[9px]">({ep.duration})</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -1101,6 +1131,7 @@ export default function App() {
                           <FilmCard 
                             film={film} 
                             onClick={() => handleSelectFilm(film)} 
+                            onSelectEpisode={(f, idx) => handleSelectFilm(f, idx)}
                             isActive={activeFilm ? activeFilm.id === film.id : false} 
                           />
                         </div>
@@ -1126,6 +1157,7 @@ export default function App() {
                           <FilmCard 
                             film={film} 
                             onClick={() => handleSelectFilm(film)} 
+                            onSelectEpisode={(f, idx) => handleSelectFilm(f, idx)}
                             isActive={activeFilm ? activeFilm.id === film.id : false} 
                           />
                         </div>
@@ -1152,6 +1184,7 @@ export default function App() {
                             <FilmCard 
                               film={film} 
                               onClick={() => handleSelectFilm(film)} 
+                              onSelectEpisode={(f, idx) => handleSelectFilm(f, idx)}
                               isActive={activeFilm ? activeFilm.id === film.id : false} 
                             />
                           </div>
@@ -1179,6 +1212,7 @@ export default function App() {
                             <FilmCard 
                               film={film} 
                               onClick={() => handleSelectFilm(film)} 
+                              onSelectEpisode={(f, idx) => handleSelectFilm(f, idx)}
                               isActive={activeFilm ? activeFilm.id === film.id : false} 
                             />
                           </div>

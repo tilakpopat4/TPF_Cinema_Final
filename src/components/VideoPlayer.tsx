@@ -13,9 +13,10 @@ interface VideoPlayerProps {
   onLike: (id: string) => void;
   isLiked: boolean;
   onOpenTipJar: () => void;
+  initialEpisodeIndex?: number;
 }
 
-export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar }: VideoPlayerProps) {
+export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar, initialEpisodeIndex = 0 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   
@@ -29,19 +30,26 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar }: Vid
   const [showControls, setShowControls] = useState(true);
   const [theaterMode, setTheaterMode] = useState(false);
   const [isLightsOff, setIsLightsOff] = useState(false);
-  const [activeEpisodeIdx, setActiveEpisodeIdx] = useState(0);
+  const [activeEpisodeIdx, setActiveEpisodeIdx] = useState(initialEpisodeIndex);
   const [hasError, setHasError] = useState(false);
   
   // YouTube Stealth Pipeline: Hides YouTube UI, title bars, and branding
   const [stealthPipelineActive, setStealthPipelineActive] = useState(true);
 
-  // Reset active episode when changing film
+  // Sync active episode when changing film or initialEpisodeIndex
   useEffect(() => {
-    setActiveEpisodeIdx(0);
-  }, [film]);
+    setActiveEpisodeIdx(initialEpisodeIndex || 0);
+  }, [film, initialEpisodeIndex]);
 
-  const currentVideoUrl = (film.episodes && film.episodes[activeEpisodeIdx])
-    ? film.episodes[activeEpisodeIdx].videoUrl
+  // Always compute normalized episodes list for series
+  const episodesList = (film.type === 'series')
+    ? (film.episodes && film.episodes.length > 0)
+        ? film.episodes
+        : [{ id: `${film.id}-ep-1`, title: `${film.title} - Episode 1`, duration: film.duration || 'Full Stream', videoUrl: film.videoUrl }]
+    : [];
+
+  const currentVideoUrl = (episodesList.length > 0 && episodesList[activeEpisodeIdx])
+    ? episodesList[activeEpisodeIdx].videoUrl
     : film.videoUrl;
 
   const embedData = getVideoEmbedData(currentVideoUrl, {
@@ -207,6 +215,75 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar }: Vid
         >
           <div className="absolute top-6 left-6 text-white/30 text-[9px] font-mono uppercase tracking-widest">
             Cinema Mode Active • Click anywhere to exit
+          </div>
+        </div>
+      )}
+
+      {/* Prominent Series Listed Episode Options Bar */}
+      {film.type === 'series' && (
+        <div className="bg-[#0e0e11] border border-amber-500/30 rounded-lg p-4 flex flex-col gap-3 shadow-xl">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-2.5">
+            <div className="flex items-center gap-2">
+              <span className="flex h-2 w-2 rounded-full bg-amber-500 animate-ping" />
+              <span className="text-xs font-mono font-bold uppercase tracking-wider text-amber-400">
+                SERIES EPISODE SELECTOR ({episodesList.length} EPISODES LISTED)
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={activeEpisodeIdx === 0}
+                onClick={() => setActiveEpisodeIdx(prev => Math.max(0, prev - 1))}
+                className="px-2.5 py-1 bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed border border-white/10 text-white text-[10px] font-mono font-bold uppercase rounded transition-all cursor-pointer"
+              >
+                ◀ Prev Ep
+              </button>
+              <span className="text-[10px] font-mono font-bold text-amber-400 bg-amber-500/10 px-2 py-1 rounded border border-amber-500/20">
+                Ep {activeEpisodeIdx + 1} / {episodesList.length}
+              </span>
+              <button
+                type="button"
+                disabled={activeEpisodeIdx >= episodesList.length - 1}
+                onClick={() => setActiveEpisodeIdx(prev => Math.min(episodesList.length - 1, prev + 1))}
+                className="px-2.5 py-1 bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed border border-white/10 text-white text-[10px] font-mono font-bold uppercase rounded transition-all cursor-pointer"
+              >
+                Next Ep ▶
+              </button>
+            </div>
+          </div>
+
+          {/* Listed Episode Tabs/Pills */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 scrollbar-thin">
+            {episodesList.map((ep, idx) => {
+              const isCurrent = activeEpisodeIdx === idx;
+              return (
+                <button
+                  key={ep.id || idx}
+                  type="button"
+                  onClick={() => setActiveEpisodeIdx(idx)}
+                  className={`px-3.5 py-2 rounded-md border text-left shrink-0 transition-all cursor-pointer flex items-center gap-2.5 ${
+                    isCurrent
+                      ? 'bg-amber-500 text-black border-amber-400 font-extrabold shadow-lg scale-[1.02]'
+                      : 'bg-black/60 hover:bg-white/10 text-white/80 border-white/10 hover:border-amber-500/40'
+                  }`}
+                >
+                  <span className={`text-[10px] font-mono font-bold uppercase px-1.5 py-0.5 rounded ${
+                    isCurrent ? 'bg-black/30 text-amber-300' : 'bg-white/10 text-white/50'
+                  }`}>
+                    EP {idx + 1}
+                  </span>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold truncate max-w-[180px]">
+                      {ep.title}
+                    </span>
+                    <span className={`text-[9px] font-mono ${isCurrent ? 'text-black/70' : 'text-white/40'}`}>
+                      {ep.duration}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
@@ -413,38 +490,40 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar }: Vid
       </div>
 
       {/* Episode Guide for Series */}
-      {film.type === 'series' && film.episodes && film.episodes.length > 0 && (
+      {film.type === 'series' && episodesList.length > 0 && (
         <div className="bg-[#0c0c0e] border border-white/5 rounded-lg p-5 flex flex-col gap-3">
           <div className="flex items-center justify-between border-b border-white/5 pb-2">
             <h4 className="text-[10px] font-mono font-bold tracking-widest text-amber-500 uppercase flex items-center gap-1.5">
               <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-              ✦ Episode Guide ({film.episodes.length} episodes)
+              ✦ Complete Episode Index ({episodesList.length} episodes)
             </h4>
-            <span className="text-[8px] font-mono text-white/30 uppercase tracking-widest">Select an episode to play</span>
+            <span className="text-[8px] font-mono text-white/30 uppercase tracking-widest">Click to switch episode immediately</span>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {film.episodes.map((ep, idx) => {
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            {episodesList.map((ep, idx) => {
               const isCurrent = activeEpisodeIdx === idx;
               return (
                 <button
-                  key={ep.id}
+                  key={ep.id || idx}
                   onClick={() => {
                     setActiveEpisodeIdx(idx);
                   }}
-                  className={`p-3.5 rounded border text-left flex flex-col gap-1 transition-all cursor-pointer relative group overflow-hidden ${
+                  className={`p-3.5 rounded-lg border text-left flex flex-col gap-1.5 transition-all cursor-pointer relative group overflow-hidden ${
                     isCurrent 
-                      ? 'bg-amber-500/[0.04] border-amber-500/50 shadow-lg' 
-                      : 'bg-black/40 border-white/5 hover:border-white/10 hover:bg-white/5'
+                      ? 'bg-amber-500/10 border-amber-500 shadow-xl ring-1 ring-amber-500/30' 
+                      : 'bg-black/40 border-white/5 hover:border-white/20 hover:bg-white/5'
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className={`text-[9px] font-mono font-bold tracking-widest uppercase ${isCurrent ? 'text-amber-500' : 'text-white/30'}`}>
+                    <span className={`text-[9px] font-mono font-extrabold tracking-widest uppercase ${isCurrent ? 'text-amber-400' : 'text-white/40'}`}>
                       {isCurrent ? '▶ NOW SHOWING' : `EPISODE ${idx + 1}`}
                     </span>
-                    <span className="text-[9px] font-mono text-white/40 tabular-nums">{ep.duration}</span>
+                    <span className="text-[9px] font-mono text-white/50 bg-white/5 px-2 py-0.5 rounded border border-white/5 tabular-nums">
+                      {ep.duration}
+                    </span>
                   </div>
-                  <h5 className={`text-xs font-semibold leading-snug transition-colors ${isCurrent ? 'text-[#F5F5F7]' : 'text-white/70 group-hover:text-white'}`}>
+                  <h5 className={`text-xs font-bold leading-snug transition-colors ${isCurrent ? 'text-amber-300' : 'text-white/80 group-hover:text-white'}`}>
                     {ep.title}
                   </h5>
                   {isCurrent && (

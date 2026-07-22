@@ -1097,6 +1097,102 @@ export default function AdminPanel({
                   )}
                 </div>
 
+                {/* Series Episode Management */}
+                {filmForm.type === 'series' && (
+                  <div className="bg-[#0f0f13] border border-rose-500/30 rounded p-4 flex flex-col gap-3">
+                    <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                      <span className="text-xs font-mono font-bold text-rose-400 uppercase flex items-center gap-1.5">
+                        <Tv className="h-4 w-4 text-rose-400" /> Web Series Episode Management
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const currentEps = filmForm.episodes || [];
+                          const nextEpNum = currentEps.length + 1;
+                          setFilmForm({
+                            ...filmForm,
+                            episodes: [
+                              ...currentEps,
+                              {
+                                id: `ep-${Date.now()}-${nextEpNum}`,
+                                title: `Episode ${nextEpNum}`,
+                                duration: '12m 00s',
+                                videoUrl: filmForm.videoUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4'
+                              }
+                            ]
+                          });
+                        }}
+                        className="px-2.5 py-1 bg-amber-500 hover:bg-amber-400 text-black text-[10px] font-mono font-bold uppercase rounded cursor-pointer"
+                      >
+                        + Add Episode
+                      </button>
+                    </div>
+
+                    {(!filmForm.episodes || filmForm.episodes.length === 0) ? (
+                      <p className="text-[11px] text-white/40 font-mono italic">
+                        No episodes added yet. Click "+ Add Episode" above to list specific episodes for this series.
+                      </p>
+                    ) : (
+                      <div className="flex flex-col gap-2.5">
+                        {filmForm.episodes.map((ep, idx) => (
+                          <div key={ep.id || idx} className="p-3 bg-black/60 border border-white/10 rounded flex flex-col gap-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-mono font-bold text-amber-400 uppercase">
+                                Episode {idx + 1}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const updated = (filmForm.episodes || []).filter((_, i) => i !== idx);
+                                  setFilmForm({ ...filmForm, episodes: updated });
+                                }}
+                                className="text-[9px] text-rose-400 hover:underline font-mono uppercase cursor-pointer"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                              <input
+                                type="text"
+                                placeholder="Episode Title"
+                                value={ep.title}
+                                onChange={(e) => {
+                                  const updated = [...(filmForm.episodes || [])];
+                                  updated[idx] = { ...updated[idx], title: e.target.value };
+                                  setFilmForm({ ...filmForm, episodes: updated });
+                                }}
+                                className="bg-black/80 border border-white/10 p-1.5 text-xs text-white rounded font-sans"
+                              />
+                              <input
+                                type="text"
+                                placeholder="Duration (e.g. 15m)"
+                                value={ep.duration}
+                                onChange={(e) => {
+                                  const updated = [...(filmForm.episodes || [])];
+                                  updated[idx] = { ...updated[idx], duration: e.target.value };
+                                  setFilmForm({ ...filmForm, episodes: updated });
+                                }}
+                                className="bg-black/80 border border-white/10 p-1.5 text-xs text-white rounded font-mono"
+                              />
+                              <input
+                                type="text"
+                                placeholder="Video / Stream URL"
+                                value={ep.videoUrl}
+                                onChange={(e) => {
+                                  const updated = [...(filmForm.episodes || [])];
+                                  updated[idx] = { ...updated[idx], videoUrl: e.target.value };
+                                  setFilmForm({ ...filmForm, episodes: updated });
+                                }}
+                                className="bg-black/80 border border-white/10 p-1.5 text-xs text-white rounded font-sans"
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[10px] font-mono uppercase text-white/50">Curation Status</label>
