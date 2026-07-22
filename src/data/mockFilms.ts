@@ -121,19 +121,25 @@ export const initialFilms: Film[] = [
         id: 'ep-3-1',
         title: 'Episode 1: The Bedroom Producer',
         duration: '10m 53s',
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4'
+        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&h=338&q=80',
+        description: 'Exploring the quiet midnight soundscapes of bedroom music producers.'
       },
       {
         id: 'ep-3-2',
         title: 'Episode 2: Colors of the Forest',
         duration: '12m 14s',
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4'
+        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=600&h=338&q=80',
+        description: 'Vivid oil canvases created deep inside ancient woodland cabins.'
       },
       {
         id: 'ep-3-3',
         title: 'Episode 3: The Canvas in the Digital Age',
         duration: '14m 48s',
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4'
+        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=600&h=338&q=80',
+        description: 'Balancing digital gallery spaces with traditional raw tactile artwork.'
       }
     ],
     reviews: [

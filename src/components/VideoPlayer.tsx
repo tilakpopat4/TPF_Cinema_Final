@@ -254,30 +254,39 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar, initi
           </div>
 
           {/* Listed Episode Tabs/Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 scrollbar-thin">
+          <div className="flex items-center gap-2.5 overflow-x-auto pb-2 pt-0.5 scrollbar-thin">
             {episodesList.map((ep, idx) => {
               const isCurrent = activeEpisodeIdx === idx;
+              const epThumb = ep.thumbnailUrl || film.landscapePosterUrl || film.posterUrl;
               return (
                 <button
                   key={ep.id || idx}
                   type="button"
                   onClick={() => setActiveEpisodeIdx(idx)}
-                  className={`px-3.5 py-2 rounded-md border text-left shrink-0 transition-all cursor-pointer flex items-center gap-2.5 ${
+                  className={`p-1.5 pr-3.5 rounded-lg border text-left shrink-0 transition-all cursor-pointer flex items-center gap-3 ${
                     isCurrent
                       ? 'bg-amber-500 text-black border-amber-400 font-extrabold shadow-lg scale-[1.02]'
                       : 'bg-black/60 hover:bg-white/10 text-white/80 border-white/10 hover:border-amber-500/40'
                   }`}
                 >
-                  <span className={`text-[10px] font-mono font-bold uppercase px-1.5 py-0.5 rounded ${
-                    isCurrent ? 'bg-black/30 text-amber-300' : 'bg-white/10 text-white/50'
-                  }`}>
-                    EP {idx + 1}
-                  </span>
+                  <div className="relative w-16 h-10 rounded overflow-hidden bg-black/80 shrink-0 border border-white/10">
+                    <img 
+                      src={epThumb} 
+                      alt={ep.title} 
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                    <span className={`absolute bottom-0.5 right-0.5 text-[8px] font-mono px-1 rounded ${
+                      isCurrent ? 'bg-black text-amber-300 font-bold' : 'bg-black/80 text-white/70'
+                    }`}>
+                      EP {idx + 1}
+                    </span>
+                  </div>
                   <div className="flex flex-col">
-                    <span className="text-xs font-bold truncate max-w-[180px]">
+                    <span className="text-xs font-bold truncate max-w-[160px]">
                       {ep.title}
                     </span>
-                    <span className={`text-[9px] font-mono ${isCurrent ? 'text-black/70' : 'text-white/40'}`}>
+                    <span className={`text-[9px] font-mono ${isCurrent ? 'text-black/80' : 'text-white/40'}`}>
                       {ep.duration}
                     </span>
                   </div>
@@ -503,29 +512,46 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar, initi
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             {episodesList.map((ep, idx) => {
               const isCurrent = activeEpisodeIdx === idx;
+              const epThumb = ep.thumbnailUrl || film.landscapePosterUrl || film.posterUrl;
               return (
                 <button
                   key={ep.id || idx}
                   onClick={() => {
                     setActiveEpisodeIdx(idx);
                   }}
-                  className={`p-3.5 rounded-lg border text-left flex flex-col gap-1.5 transition-all cursor-pointer relative group overflow-hidden ${
+                  className={`p-2.5 rounded-lg border text-left flex flex-col gap-2 transition-all cursor-pointer relative group overflow-hidden ${
                     isCurrent 
                       ? 'bg-amber-500/10 border-amber-500 shadow-xl ring-1 ring-amber-500/30' 
                       : 'bg-black/40 border-white/5 hover:border-white/20 hover:bg-white/5'
                   }`}
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className={`text-[9px] font-mono font-extrabold tracking-widest uppercase ${isCurrent ? 'text-amber-400' : 'text-white/40'}`}>
+                  <div className="relative w-full aspect-video rounded-md overflow-hidden bg-black border border-white/10">
+                    <img 
+                      src={epThumb} 
+                      alt={ep.title} 
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
+                    <span className={`absolute top-2 left-2 text-[9px] font-mono font-extrabold tracking-widest uppercase px-2 py-0.5 rounded backdrop-blur-sm ${
+                      isCurrent ? 'bg-amber-500 text-black shadow' : 'bg-black/80 text-white/80'
+                    }`}>
                       {isCurrent ? '▶ NOW SHOWING' : `EPISODE ${idx + 1}`}
                     </span>
-                    <span className="text-[9px] font-mono text-white/50 bg-white/5 px-2 py-0.5 rounded border border-white/5 tabular-nums">
+                    <span className="absolute bottom-2 right-2 text-[9px] font-mono text-white/90 bg-black/80 px-2 py-0.5 rounded border border-white/10 tabular-nums">
                       {ep.duration}
                     </span>
                   </div>
-                  <h5 className={`text-xs font-bold leading-snug transition-colors ${isCurrent ? 'text-amber-300' : 'text-white/80 group-hover:text-white'}`}>
-                    {ep.title}
-                  </h5>
+                  <div className="flex flex-col gap-0.5 px-0.5">
+                    <h5 className={`text-xs font-bold leading-snug transition-colors ${isCurrent ? 'text-amber-300' : 'text-white/80 group-hover:text-white'}`}>
+                      {ep.title}
+                    </h5>
+                    {ep.description && (
+                      <p className="text-[10px] text-white/50 line-clamp-2 leading-relaxed">
+                        {ep.description}
+                      </p>
+                    )}
+                  </div>
                   {isCurrent && (
                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-amber-500" />
                   )}

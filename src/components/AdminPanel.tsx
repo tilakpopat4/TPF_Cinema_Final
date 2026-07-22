@@ -8,7 +8,7 @@ import {
   Check, X, Save, Search, Settings, ShieldAlert, ArrowLeft, RefreshCw,
   ArrowUp, ArrowDown, Move, HardDrive, Server, Globe, Database, Copy, 
   ExternalLink, Zap, Video, ShieldCheck, Play, CheckCircle2, Sparkles, AlertCircle,
-  Upload, FileVideo, CloudUpload, ArrowRight, Clock, FolderPlus
+  Upload, FileVideo, CloudUpload, ArrowRight, Clock, FolderPlus, Tv, Image
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -21,7 +21,7 @@ interface AdminPanelProps {
   onBack: () => void;
 }
 
-type AdminTab = 'films' | 'filmmakers' | 'upcoming' | 'storage';
+type AdminTab = 'films' | 'filmmakers' | 'upcoming' | 'storage' | 'episodes';
 
 export default function AdminPanel({
   films,
@@ -115,6 +115,34 @@ export default function AdminPanel({
 
   const [isDraggingVideo, setIsDraggingVideo] = useState(false);
 
+  // --- Web Series Episode Hub State ---
+  const [selectedSeriesId, setSelectedSeriesId] = useState<string>('');
+
+  const processEpisodeVideoUpload = (file: File, episodeIndex: number) => {
+    const blobUrl = URL.createObjectURL(file);
+    const updated = [...(filmForm.episodes || [])];
+    if (updated[episodeIndex]) {
+      updated[episodeIndex] = {
+        ...updated[episodeIndex],
+        videoUrl: blobUrl,
+        title: updated[episodeIndex].title.includes('Episode') ? file.name.replace(/\.[^/.]+$/, '').replace(/_/g, ' ') : updated[episodeIndex].title
+      };
+      setFilmForm({ ...filmForm, episodes: updated });
+    }
+  };
+
+  const processEpisodeThumbnailUpload = (file: File, episodeIndex: number) => {
+    const blobUrl = URL.createObjectURL(file);
+    const updated = [...(filmForm.episodes || [])];
+    if (updated[episodeIndex]) {
+      updated[episodeIndex] = {
+        ...updated[episodeIndex],
+        thumbnailUrl: blobUrl
+      };
+      setFilmForm({ ...filmForm, episodes: updated });
+    }
+  };
+
   const processVideoFileSelect = (file: File) => {
     const fileExt = file.name.split('.').pop()?.toLowerCase() || 'mp4';
     const isMov = fileExt === 'mov' || file.type.includes('quicktime');
@@ -204,8 +232,7 @@ export default function AdminPanel({
       approvalStatus: 'approved'
     };
 
-    let updatedFilms = films.map(f => ({ ...f, isFeatured: false }));
-    updatedFilms.unshift(newFilm);
+    const updatedFilms: Film[] = [newFilm, ...films.map(f => ({ ...f, isFeatured: false }))];
 
     onUpdateFilms(updatedFilms);
     alert(`"${titleFormatted}" has been published directly to the main OTT screen! Exit console or return to Home to watch it.`);
@@ -617,11 +644,32 @@ export default function AdminPanel({
             className={`flex items-center gap-2 px-4 py-2 rounded text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
               activeTab === 'storage' 
                 ? 'bg-amber-500 text-black font-extrabold' 
-                : 'text-amber-400/80 hover:text-amber-400 hover:bg-amber-500/10'
+                : 'text-white/50 hover:text-white hover:bg-white/5'
             }`}
           >
             <HardDrive className="h-4 w-4" />
             50GB+ Cloud Storage
+          </button>
+
+          <button
+            onClick={() => { 
+              setActiveTab('episodes'); 
+              setIsAddingNew(false); 
+              setEditingId(null); 
+              setSearchQuery('');
+              const seriesList = films.filter(f => f.type === 'series');
+              if (seriesList.length > 0 && !selectedSeriesId) {
+                setSelectedSeriesId(seriesList[0].id);
+              }
+            }}
+            className={`flex items-center gap-2 px-4 py-2 rounded text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+              activeTab === 'episodes' 
+                ? 'bg-rose-500 text-white font-extrabold shadow-lg' 
+                : 'text-rose-400 hover:text-rose-300 hover:bg-rose-500/10'
+            }`}
+          >
+            <Tv className="h-4 w-4" />
+            Episode Upload Hub
           </button>
         </div>
 
@@ -1117,7 +1165,8 @@ export default function AdminPanel({
                                 id: `ep-${Date.now()}-${nextEpNum}`,
                                 title: `Episode ${nextEpNum}`,
                                 duration: '12m 00s',
-                                videoUrl: filmForm.videoUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4'
+                                videoUrl: filmForm.videoUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+                                thumbnailUrl: ''
                               }
                             ]
                           });
@@ -1135,8 +1184,8 @@ export default function AdminPanel({
                     ) : (
                       <div className="flex flex-col gap-2.5">
                         {filmForm.episodes.map((ep, idx) => (
-                          <div key={ep.id || idx} className="p-3 bg-black/60 border border-white/10 rounded flex flex-col gap-2">
-                            <div className="flex items-center justify-between">
+                          <div key={ep.id || idx} className="p-3 bg-black/60 border border-white/10 rounded-lg flex flex-col gap-2.5">
+                            <div className="flex items-center justify-between border-b border-white/5 pb-1.5">
                               <span className="text-[10px] font-mono font-bold text-amber-400 uppercase">
                                 Episode {idx + 1}
                               </span>
@@ -1151,40 +1200,136 @@ export default function AdminPanel({
                                 Remove
                               </button>
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                              <input
-                                type="text"
-                                placeholder="Episode Title"
-                                value={ep.title}
-                                onChange={(e) => {
-                                  const updated = [...(filmForm.episodes || [])];
-                                  updated[idx] = { ...updated[idx], title: e.target.value };
-                                  setFilmForm({ ...filmForm, episodes: updated });
-                                }}
-                                className="bg-black/80 border border-white/10 p-1.5 text-xs text-white rounded font-sans"
-                              />
-                              <input
-                                type="text"
-                                placeholder="Duration (e.g. 15m)"
-                                value={ep.duration}
-                                onChange={(e) => {
-                                  const updated = [...(filmForm.episodes || [])];
-                                  updated[idx] = { ...updated[idx], duration: e.target.value };
-                                  setFilmForm({ ...filmForm, episodes: updated });
-                                }}
-                                className="bg-black/80 border border-white/10 p-1.5 text-xs text-white rounded font-mono"
-                              />
-                              <input
-                                type="text"
-                                placeholder="Video / Stream URL"
-                                value={ep.videoUrl}
-                                onChange={(e) => {
-                                  const updated = [...(filmForm.episodes || [])];
-                                  updated[idx] = { ...updated[idx], videoUrl: e.target.value };
-                                  setFilmForm({ ...filmForm, episodes: updated });
-                                }}
-                                className="bg-black/80 border border-white/10 p-1.5 text-xs text-white rounded font-sans"
-                              />
+                            
+                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-start">
+                              {/* Ep Thumbnail Preview & Input */}
+                              <div className="sm:col-span-4 flex flex-col gap-1.5">
+                                <span className="text-[9px] font-mono uppercase text-white/50">Episode Thumbnail</span>
+                                <div className="relative aspect-video rounded overflow-hidden bg-black/80 border border-white/10 flex items-center justify-center text-[9px] text-white/30 font-mono">
+                                  {ep.thumbnailUrl ? (
+                                    <img 
+                                      src={ep.thumbnailUrl} 
+                                      alt={`Ep ${idx + 1}`} 
+                                      className="w-full h-full object-cover"
+                                      referrerPolicy="no-referrer"
+                                    />
+                                  ) : (
+                                    <span>No Thumbnail</span>
+                                  )}
+                                </div>
+                                <input
+                                  type="text"
+                                  placeholder="Thumbnail Image URL"
+                                  value={ep.thumbnailUrl || ''}
+                                  onChange={(e) => {
+                                    const updated = [...(filmForm.episodes || [])];
+                                    updated[idx] = { ...updated[idx], thumbnailUrl: e.target.value };
+                                    setFilmForm({ ...filmForm, episodes: updated });
+                                  }}
+                                  className="bg-black/80 border border-white/10 p-1 text-[10px] text-white rounded font-sans"
+                                />
+                                <label className="px-2 py-1 bg-white/10 hover:bg-white/20 text-white text-[9px] font-mono font-bold rounded cursor-pointer flex items-center justify-center gap-1.5 border border-white/10 transition-all">
+                                  <Upload className="h-3 w-3 text-amber-400" />
+                                  <span>Upload Thumbnail File</span>
+                                  <input 
+                                    type="file" 
+                                    accept="image/*" 
+                                    className="hidden" 
+                                    onChange={(e) => {
+                                      if (e.target.files && e.target.files[0]) {
+                                        processEpisodeThumbnailUpload(e.target.files[0], idx);
+                                      }
+                                    }} 
+                                  />
+                                </label>
+                              </div>
+
+                              <div className="sm:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <div className="sm:col-span-2">
+                                  <span className="text-[9px] font-mono uppercase text-white/50">Episode Title</span>
+                                  <input
+                                    type="text"
+                                    placeholder="Episode Title"
+                                    value={ep.title}
+                                    onChange={(e) => {
+                                      const updated = [...(filmForm.episodes || [])];
+                                      updated[idx] = { ...updated[idx], title: e.target.value };
+                                      setFilmForm({ ...filmForm, episodes: updated });
+                                    }}
+                                    className="w-full bg-black/80 border border-white/10 p-1.5 text-xs text-white rounded font-sans mt-0.5"
+                                  />
+                                </div>
+
+                                <div>
+                                  <span className="text-[9px] font-mono uppercase text-white/50">Duration</span>
+                                  <input
+                                    type="text"
+                                    placeholder="Duration (e.g. 15m)"
+                                    value={ep.duration}
+                                    onChange={(e) => {
+                                      const updated = [...(filmForm.episodes || [])];
+                                      updated[idx] = { ...updated[idx], duration: e.target.value };
+                                      setFilmForm({ ...filmForm, episodes: updated });
+                                    }}
+                                    className="w-full bg-black/80 border border-white/10 p-1.5 text-xs text-white rounded font-mono mt-0.5"
+                                  />
+                                </div>
+
+                                <div>
+                                  <span className="text-[9px] font-mono uppercase text-white/50">Video Stream URL</span>
+                                  <input
+                                    type="text"
+                                    placeholder="Video / Stream URL"
+                                    value={ep.videoUrl}
+                                    onChange={(e) => {
+                                      const updated = [...(filmForm.episodes || [])];
+                                      updated[idx] = { ...updated[idx], videoUrl: e.target.value };
+                                      setFilmForm({ ...filmForm, episodes: updated });
+                                    }}
+                                    className="w-full bg-black/80 border border-white/10 p-1.5 text-xs text-white rounded font-sans mt-0.5"
+                                  />
+                                </div>
+
+                                {/* Direct Video File Uploader & Vault Selector */}
+                                <div className="sm:col-span-2 flex flex-col gap-1.5 pt-1 border-t border-white/5">
+                                  <div className="flex items-center gap-2">
+                                    <label className="flex-1 px-2.5 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 text-[10px] font-mono font-bold rounded cursor-pointer flex items-center justify-center gap-1.5 transition-all">
+                                      <Upload className="h-3 w-3 text-amber-400" />
+                                      <span>Upload Episode Video (.mp4 / .mov)</span>
+                                      <input 
+                                        type="file" 
+                                        accept="video/*,.mp4,.mov" 
+                                        className="hidden" 
+                                        onChange={(e) => {
+                                          if (e.target.files && e.target.files[0]) {
+                                            processEpisodeVideoUpload(e.target.files[0], idx);
+                                          }
+                                        }} 
+                                      />
+                                    </label>
+                                  </div>
+
+                                  {masterVideos.length > 0 && (
+                                    <select
+                                      onChange={(e) => {
+                                        if (e.target.value) {
+                                          const updated = [...(filmForm.episodes || [])];
+                                          updated[idx] = { ...updated[idx], videoUrl: e.target.value };
+                                          setFilmForm({ ...filmForm, episodes: updated });
+                                        }
+                                      }}
+                                      className="w-full bg-black border border-white/10 text-[10px] text-amber-400 font-mono p-1.5 rounded cursor-pointer focus:outline-none focus:border-amber-500"
+                                    >
+                                      <option value="">Attach from Storage Vault ({masterVideos.length} files)...</option>
+                                      {masterVideos.map(mv => (
+                                        <option key={mv.id} value={mv.videoUrl}>
+                                          {mv.fileName} ({mv.fileSizeFormatted})
+                                        </option>
+                                      ))}
+                                    </select>
+                                  )}
+                                </div>
+                              </div>
                             </div>
                           </div>
                         ))}
@@ -1899,6 +2044,72 @@ export default function AdminPanel({
                         <button
                           type="button"
                           onClick={() => {
+                            const seriesList = films.filter(f => f.type === 'series');
+                            if (seriesList.length === 0) {
+                              alert('No Web Series found! Creating a new Web Series for this episode...');
+                              const newSeriesId = `series-${Date.now()}`;
+                              const newSeries: Film = {
+                                id: newSeriesId,
+                                title: mv.fileName.replace(/\.[^/.]+$/, '').replace(/_/g, ' ') + ' Series',
+                                type: 'series',
+                                description: 'Web Series created from master upload vault.',
+                                duration: 'Season 1',
+                                genre: ['Drama'],
+                                director: filmmakers[0]?.name || 'Unknown',
+                                releaseYear: new Date().getFullYear(),
+                                posterUrl: 'https://images.unsplash.com/photo-1518676590629-3dcbd9c5a5c9?auto=format&fit=crop&w=600&h=900&q=80',
+                                videoUrl: mv.videoUrl,
+                                cameraUsed: 'Arri Alexa 35',
+                                filmmakerId: filmmakers[0]?.id || 'fm-1',
+                                views: 0,
+                                likes: 0,
+                                reviews: [],
+                                isFeatured: false,
+                                upiId: 'tpfcinemas@okaxis',
+                                approvalStatus: 'approved',
+                                episodes: [
+                                  {
+                                    id: `ep-${Date.now()}-1`,
+                                    title: mv.fileName.replace(/\.[^/.]+$/, '').replace(/_/g, ' '),
+                                    duration: '15m 00s',
+                                    videoUrl: mv.videoUrl,
+                                    thumbnailUrl: ''
+                                  }
+                                ]
+                              };
+                              onUpdateFilms([newSeries, ...films]);
+                              setSelectedSeriesId(newSeriesId);
+                              setActiveTab('episodes');
+                              return;
+                            }
+                            const targetSeries = seriesList[0];
+                            const newEpNum = (targetSeries.episodes?.length || 0) + 1;
+                            const updatedSeriesEpisodes = [
+                              ...(targetSeries.episodes || []),
+                              {
+                                id: `ep-${Date.now()}-${newEpNum}`,
+                                title: mv.fileName.replace(/\.[^/.]+$/, '').replace(/_/g, ' '),
+                                duration: '15m 00s',
+                                videoUrl: mv.videoUrl,
+                                thumbnailUrl: targetSeries.posterUrl || ''
+                              }
+                            ];
+                            const updatedFilms = films.map(f => f.id === targetSeries.id ? { ...f, episodes: updatedSeriesEpisodes } : f);
+                            onUpdateFilms(updatedFilms);
+                            setSelectedSeriesId(targetSeries.id);
+                            setActiveTab('episodes');
+                            alert(`Attached "${mv.fileName}" as Episode ${newEpNum} to Web Series "${targetSeries.title}"!`);
+                          }}
+                          className="px-3 py-1.5 bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/30 text-rose-300 text-xs font-mono font-bold uppercase tracking-wider rounded transition-all cursor-pointer flex items-center gap-1"
+                          title="Attach this video as an episode to a Web Series"
+                        >
+                          <Tv className="h-3.5 w-3.5 text-rose-400" />
+                          Attach as Series Episode
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
                             setTestVideoUrl(mv.videoUrl);
                             setTestActive(true);
                             setTestStatus('success');
@@ -2178,6 +2389,402 @@ export default function AdminPanel({
   }
 ]`}
             </pre>
+          </div>
+        </div>
+      )}
+
+      {/* Dedicated Episode Upload & Management Hub */}
+      {activeTab === 'episodes' && (
+        <div className="xl:col-span-12 flex flex-col gap-6">
+          <div className="bg-[#0b0b0d] p-6 rounded-xl border border-rose-500/30 shadow-2xl flex flex-col gap-6">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400">
+                  <Tv className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold font-mono text-white uppercase tracking-wider flex items-center gap-2">
+                    Web Series Episode Upload Hub
+                  </h3>
+                  <p className="text-xs text-white/50 font-sans">
+                    Dedicated batch episode video uploader & streaming season builder for web series
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    startAddFilm();
+                    setFilmForm(prev => ({ ...prev, type: 'series', title: 'New Web Series' }));
+                    setActiveTab('films');
+                  }}
+                  className="px-3.5 py-2 bg-amber-500 hover:bg-amber-400 text-black text-xs font-mono font-bold uppercase rounded cursor-pointer transition-all flex items-center gap-1.5"
+                >
+                  <Plus className="h-4 w-4" />
+                  + Create New Web Series
+                </button>
+              </div>
+            </div>
+
+            {/* Select Web Series Dropdown */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-black/60 p-4 rounded-lg border border-white/10">
+              <div className="md:col-span-4 flex flex-col gap-1">
+                <label className="text-[10px] font-mono text-rose-400 uppercase font-bold">
+                  Select Target Web Series:
+                </label>
+                <select
+                  value={selectedSeriesId}
+                  onChange={(e) => setSelectedSeriesId(e.target.value)}
+                  className="w-full bg-neutral-900 border border-white/20 p-2.5 rounded text-xs text-white font-mono font-bold focus:outline-none focus:border-rose-500 cursor-pointer"
+                >
+                  {films.filter(f => f.type === 'series').length === 0 ? (
+                    <option value="">No Web Series available. Create one first!</option>
+                  ) : (
+                    films.filter(f => f.type === 'series').map(s => (
+                      <option key={s.id} value={s.id}>
+                        {s.title} ({s.episodes?.length || 0} Episodes) — {s.director}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
+
+              {/* Selected Series Info card preview */}
+              {(() => {
+                const currentSeries = films.find(f => f.id === selectedSeriesId);
+                if (!currentSeries) return null;
+                return (
+                  <div className="md:col-span-8 flex items-center gap-4 bg-white/[0.02] p-3 rounded border border-white/5">
+                    <img 
+                      src={getDirectImageUrl(currentSeries.posterUrl)} 
+                      alt={currentSeries.title}
+                      className="w-12 h-16 object-cover rounded border border-white/10 shrink-0" 
+                    />
+                    <div className="flex flex-col gap-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-white truncate font-sans">{currentSeries.title}</span>
+                        <span className="text-[9px] font-mono uppercase bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded border border-rose-500/30">
+                          {currentSeries.episodes?.length || 0} Episodes
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-white/50 truncate font-sans">{currentSeries.description || 'No description'}</p>
+                      <span className="text-[10px] font-mono text-amber-400">Director: {currentSeries.director}</span>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Direct Episode Video Drag and Drop Uploader */}
+            {selectedSeriesId && (() => {
+              const currentSeries = films.find(f => f.id === selectedSeriesId);
+              if (!currentSeries) return null;
+
+              const handleBatchEpisodeUpload = (files: FileList) => {
+                const newEpisodes = Array.from(files).map((file, idx) => {
+                  const epNum = (currentSeries.episodes?.length || 0) + idx + 1;
+                  const blobUrl = URL.createObjectURL(file);
+                  const titleFormatted = file.name.replace(/\.[^/.]+$/, '').replace(/_/g, ' ');
+                  return {
+                    id: `ep-${Date.now()}-${idx}-${epNum}`,
+                    title: titleFormatted || `Episode ${epNum}`,
+                    duration: '15m 00s',
+                    videoUrl: blobUrl,
+                    thumbnailUrl: currentSeries.posterUrl || ''
+                  };
+                });
+
+                const updated = [...(currentSeries.episodes || []), ...newEpisodes];
+                const updatedFilms = films.map(f => f.id === selectedSeriesId ? { ...f, episodes: updated } : f);
+                onUpdateFilms(updatedFilms);
+              };
+
+              return (
+                <div className="flex flex-col gap-6">
+                  {/* Batch Episode Dropzone */}
+                  <div className="border-2 border-dashed border-rose-500/40 bg-rose-500/[0.02] hover:bg-rose-500/[0.05] rounded-xl p-6 text-center relative cursor-pointer transition-all">
+                    <input
+                      type="file"
+                      accept="video/*,.mp4,.mov"
+                      multiple
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files.length > 0) {
+                          handleBatchEpisodeUpload(e.target.files);
+                        }
+                      }}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    />
+                    <div className="p-3 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-full w-12 h-12 mx-auto mb-2 flex items-center justify-center">
+                      <Upload className="h-6 w-6" />
+                    </div>
+                    <h4 className="text-sm font-bold font-mono text-white uppercase tracking-wider mb-1">
+                      Drag & Drop Episode Video Files Here (.mp4 / .mov)
+                    </h4>
+                    <p className="text-xs text-white/50 max-w-lg mx-auto mb-3">
+                      Upload single or multiple video files simultaneously. Each uploaded video will automatically create an episode entry in <strong className="text-rose-300">{currentSeries.title}</strong> with instant 4K streaming!
+                    </p>
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-mono rounded-full font-bold uppercase">
+                      <Sparkles className="h-3 w-3" /> Multi-File Episode Batch Upload Ready
+                    </div>
+                  </div>
+
+                  {/* List of Episodes */}
+                  <div className="flex flex-col gap-4">
+                    <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                      <h4 className="text-xs font-mono font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                        <Tv className="h-4 w-4 text-rose-400" />
+                        Episodes List for "{currentSeries.title}" ({currentSeries.episodes?.length || 0})
+                      </h4>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nextEpNum = (currentSeries.episodes?.length || 0) + 1;
+                          const updated = [
+                            ...(currentSeries.episodes || []),
+                            {
+                              id: `ep-${Date.now()}-${nextEpNum}`,
+                              title: `Episode ${nextEpNum}`,
+                              duration: '12m 00s',
+                              videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+                              thumbnailUrl: currentSeries.posterUrl || ''
+                            }
+                          ];
+                          const updatedFilms = films.map(f => f.id === selectedSeriesId ? { ...f, episodes: updated } : f);
+                          onUpdateFilms(updatedFilms);
+                        }}
+                        className="px-3 py-1 bg-amber-500 hover:bg-amber-400 text-black text-[10px] font-mono font-extrabold uppercase rounded cursor-pointer"
+                      >
+                        + Add Episode Slot
+                      </button>
+                    </div>
+
+                    {(!currentSeries.episodes || currentSeries.episodes.length === 0) ? (
+                      <div className="p-8 text-center bg-black/40 border border-white/5 rounded-xl text-xs text-white/40 font-mono">
+                        No episodes added to this web series yet. Drop video files above or click "+ Add Episode Slot" to build this season!
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-4">
+                        {currentSeries.episodes.map((ep, idx) => (
+                          <div key={ep.id || idx} className="bg-black/80 border border-white/10 hover:border-rose-500/30 rounded-xl p-4 flex flex-col gap-4 transition-all">
+                            <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                              <div className="flex items-center gap-2">
+                                <span className="px-2 py-0.5 bg-rose-500 text-white font-mono text-[10px] font-black rounded uppercase">
+                                  Episode {idx + 1}
+                                </span>
+                                <span className="text-xs font-bold text-white font-mono">{ep.title}</span>
+                              </div>
+
+                              <div className="flex items-center gap-2">
+                                {idx > 0 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const eps = [...(currentSeries.episodes || [])];
+                                      const temp = eps[idx];
+                                      eps[idx] = eps[idx - 1];
+                                      eps[idx - 1] = temp;
+                                      const updatedFilms = films.map(f => f.id === selectedSeriesId ? { ...f, episodes: eps } : f);
+                                      onUpdateFilms(updatedFilms);
+                                    }}
+                                    className="p-1 bg-white/5 hover:bg-white/10 rounded text-white/60 hover:text-white"
+                                    title="Move Up"
+                                  >
+                                    <ArrowUp className="h-3 w-3" />
+                                  </button>
+                                )}
+                                {idx < (currentSeries.episodes?.length || 0) - 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const eps = [...(currentSeries.episodes || [])];
+                                      const temp = eps[idx];
+                                      eps[idx] = eps[idx + 1];
+                                      eps[idx + 1] = temp;
+                                      const updatedFilms = films.map(f => f.id === selectedSeriesId ? { ...f, episodes: eps } : f);
+                                      onUpdateFilms(updatedFilms);
+                                    }}
+                                    className="p-1 bg-white/5 hover:bg-white/10 rounded text-white/60 hover:text-white"
+                                    title="Move Down"
+                                  >
+                                    <ArrowDown className="h-3 w-3" />
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const updated = (currentSeries.episodes || []).filter((_, i) => i !== idx);
+                                    const updatedFilms = films.map(f => f.id === selectedSeriesId ? { ...f, episodes: updated } : f);
+                                    onUpdateFilms(updatedFilms);
+                                  }}
+                                  className="text-[10px] font-mono text-rose-400 hover:underline uppercase cursor-pointer"
+                                >
+                                  Remove Episode
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
+                              {/* Thumbnail preview */}
+                              <div className="md:col-span-3 flex flex-col gap-1.5">
+                                <span className="text-[9px] font-mono text-white/50 uppercase">Episode Thumbnail</span>
+                                <div className="aspect-video bg-neutral-900 rounded overflow-hidden border border-white/10 relative flex items-center justify-center">
+                                  {ep.thumbnailUrl ? (
+                                    <img src={getDirectImageUrl(ep.thumbnailUrl)} alt={ep.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                  ) : (
+                                    <span className="text-[9px] font-mono text-white/30">No Thumbnail</span>
+                                  )}
+                                </div>
+                                <input
+                                  type="text"
+                                  placeholder="Thumbnail Image URL"
+                                  value={ep.thumbnailUrl || ''}
+                                  onChange={(e) => {
+                                    const eps = [...(currentSeries.episodes || [])];
+                                    eps[idx] = { ...eps[idx], thumbnailUrl: e.target.value };
+                                    const updatedFilms = films.map(f => f.id === selectedSeriesId ? { ...f, episodes: eps } : f);
+                                    onUpdateFilms(updatedFilms);
+                                  }}
+                                  className="bg-black border border-white/10 p-1.5 text-[10px] text-white rounded font-sans"
+                                />
+                                <label className="px-2 py-1 bg-white/10 hover:bg-white/20 text-white text-[9px] font-mono rounded cursor-pointer flex items-center justify-center gap-1 border border-white/10">
+                                  <Upload className="h-3 w-3 text-amber-400" />
+                                  <span>Upload Thumbnail</span>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                      if (e.target.files && e.target.files[0]) {
+                                        const blobUrl = URL.createObjectURL(e.target.files[0]);
+                                        const eps = [...(currentSeries.episodes || [])];
+                                        eps[idx] = { ...eps[idx], thumbnailUrl: blobUrl };
+                                        const updatedFilms = films.map(f => f.id === selectedSeriesId ? { ...f, episodes: eps } : f);
+                                        onUpdateFilms(updatedFilms);
+                                      }
+                                    }}
+                                  />
+                                </label>
+                              </div>
+
+                              {/* Form controls */}
+                              <div className="md:col-span-9 grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div className="md:col-span-2 flex flex-col gap-1">
+                                  <span className="text-[9px] font-mono text-white/50 uppercase">Episode Title</span>
+                                  <input
+                                    type="text"
+                                    value={ep.title}
+                                    onChange={(e) => {
+                                      const eps = [...(currentSeries.episodes || [])];
+                                      eps[idx] = { ...eps[idx], title: e.target.value };
+                                      const updatedFilms = films.map(f => f.id === selectedSeriesId ? { ...f, episodes: eps } : f);
+                                      onUpdateFilms(updatedFilms);
+                                    }}
+                                    className="bg-black border border-white/10 p-2 text-xs text-white rounded font-sans"
+                                    placeholder="Episode Title"
+                                  />
+                                </div>
+
+                                <div className="flex flex-col gap-1">
+                                  <span className="text-[9px] font-mono text-white/50 uppercase">Duration</span>
+                                  <input
+                                    type="text"
+                                    value={ep.duration}
+                                    onChange={(e) => {
+                                      const eps = [...(currentSeries.episodes || [])];
+                                      eps[idx] = { ...eps[idx], duration: e.target.value };
+                                      const updatedFilms = films.map(f => f.id === selectedSeriesId ? { ...f, episodes: eps } : f);
+                                      onUpdateFilms(updatedFilms);
+                                    }}
+                                    className="bg-black border border-white/10 p-2 text-xs text-white rounded font-mono"
+                                    placeholder="e.g. 15m 30s"
+                                  />
+                                </div>
+
+                                <div className="flex flex-col gap-1">
+                                  <span className="text-[9px] font-mono text-white/50 uppercase">Video Stream URL</span>
+                                  <input
+                                    type="text"
+                                    value={ep.videoUrl}
+                                    onChange={(e) => {
+                                      const eps = [...(currentSeries.episodes || [])];
+                                      eps[idx] = { ...eps[idx], videoUrl: e.target.value };
+                                      const updatedFilms = films.map(f => f.id === selectedSeriesId ? { ...f, episodes: eps } : f);
+                                      onUpdateFilms(updatedFilms);
+                                    }}
+                                    className="bg-black border border-white/10 p-2 text-xs text-white rounded font-sans"
+                                    placeholder="Video / Stream URL"
+                                  />
+                                </div>
+
+                                {/* Video Upload & Master Vault Selector */}
+                                <div className="md:col-span-2 flex flex-col sm:flex-row gap-2 pt-1 border-t border-white/5 items-center">
+                                  <label className="flex-1 px-3 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 text-[10px] font-mono font-bold rounded cursor-pointer flex items-center justify-center gap-1.5 transition-all">
+                                    <Upload className="h-3.5 w-3.5 text-amber-400" />
+                                    <span>Upload Video File (.mp4 / .mov)</span>
+                                    <input
+                                      type="file"
+                                      accept="video/*,.mp4,.mov"
+                                      className="hidden"
+                                      onChange={(e) => {
+                                        if (e.target.files && e.target.files[0]) {
+                                          const blobUrl = URL.createObjectURL(e.target.files[0]);
+                                          const eps = [...(currentSeries.episodes || [])];
+                                          eps[idx] = { ...eps[idx], videoUrl: blobUrl };
+                                          const updatedFilms = films.map(f => f.id === selectedSeriesId ? { ...f, episodes: eps } : f);
+                                          onUpdateFilms(updatedFilms);
+                                        }
+                                      }}
+                                    />
+                                  </label>
+
+                                  {masterVideos.length > 0 && (
+                                    <select
+                                      onChange={(e) => {
+                                        if (e.target.value) {
+                                          const eps = [...(currentSeries.episodes || [])];
+                                          eps[idx] = { ...eps[idx], videoUrl: e.target.value };
+                                          const updatedFilms = films.map(f => f.id === selectedSeriesId ? { ...f, episodes: eps } : f);
+                                          onUpdateFilms(updatedFilms);
+                                        }
+                                      }}
+                                      className="bg-black border border-white/10 text-[10px] text-amber-400 font-mono p-2 rounded cursor-pointer focus:outline-none focus:border-amber-500"
+                                    >
+                                      <option value="">Attach from Storage Vault ({masterVideos.length} files)...</option>
+                                      {masterVideos.map(mv => (
+                                        <option key={mv.id} value={mv.videoUrl}>
+                                          {mv.fileName} ({mv.fileSizeFormatted})
+                                        </option>
+                                      ))}
+                                    </select>
+                                  )}
+
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setTestVideoUrl(ep.videoUrl);
+                                      setTestActive(true);
+                                      setTestStatus('success');
+                                      setActiveTab('storage');
+                                    }}
+                                    className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white text-[10px] font-mono font-bold rounded cursor-pointer flex items-center gap-1 shrink-0"
+                                  >
+                                    <Play className="h-3 w-3 fill-current" />
+                                    Test Stream
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}

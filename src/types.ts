@@ -31,6 +31,8 @@ export interface Episode {
   title: string;
   duration: string;
   videoUrl: string;
+  thumbnailUrl?: string;
+  description?: string;
 }
 
 export interface Film {

@@ -86,8 +86,8 @@ export default function SubmissionModal({ onClose, onSubmit, prefilledUpiId = ''
   const [customVideoUrl, setCustomVideoUrl] = useState('');
 
   // Dynamic episodes state for web series
-  const [episodes, setEpisodes] = useState<Array<{ id: string; title: string; duration: string; videoUrl: string }>>([
-    { id: 'ep-1', title: 'Episode 1: Pilot', duration: '12m', videoUrl: '' }
+  const [episodes, setEpisodes] = useState<Array<{ id: string; title: string; duration: string; videoUrl: string; thumbnailUrl?: string }>>([
+    { id: 'ep-1', title: 'Episode 1: Pilot', duration: '12m', videoUrl: '', thumbnailUrl: '' }
   ]);
 
   useEffect(() => {
@@ -462,7 +462,8 @@ Best Regards,
                           id: `ep-${Date.now()}`,
                           title: `Episode ${episodes.length + 1}`,
                           duration: '10m',
-                          videoUrl: ''
+                          videoUrl: '',
+                          thumbnailUrl: ''
                         }
                       ]);
                     }}
@@ -473,75 +474,113 @@ Best Regards,
                   </button>
                 </div>
 
-                <div className="flex flex-col gap-3 max-h-64 overflow-y-auto pr-1 [scrollbar-width:thin]">
+                <div className="flex flex-col gap-3 max-h-80 overflow-y-auto pr-1 [scrollbar-width:thin]">
                   {episodes.map((ep, idx) => (
-                    <div key={ep.id} className="grid grid-cols-1 md:grid-cols-12 gap-2 items-end bg-black/40 border border-white/5 p-3 rounded relative">
-                      <div className="md:col-span-5">
-                        <label className="block text-[8px] font-sans text-white/40 uppercase tracking-widest mb-1">
-                          Episode {idx + 1} Title
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          placeholder="e.g. Episode 1: Pilot"
-                          value={ep.title}
-                          onChange={(e) => {
-                            const newEps = [...episodes];
-                            newEps[idx].title = e.target.value;
-                            setEpisodes(newEps);
-                          }}
-                          className="w-full bg-white/5 hover:bg-white/10 text-[#F5F5F7] text-xs px-2.5 py-1.5 rounded border border-white/10 focus:border-amber-500/50 focus:outline-none focus:bg-white/5 transition-all font-sans"
-                        />
-                      </div>
-
-                      <div className="md:col-span-2">
-                        <label className="block text-[8px] font-sans text-white/40 uppercase tracking-widest mb-1">
-                          Duration
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          placeholder="e.g. 10m"
-                          value={ep.duration}
-                          onChange={(e) => {
-                            const newEps = [...episodes];
-                            newEps[idx].duration = e.target.value;
-                            setEpisodes(newEps);
-                          }}
-                          className="w-full bg-white/5 hover:bg-white/10 text-[#F5F5F7] text-xs px-2.5 py-1.5 rounded border border-white/10 focus:border-amber-500/50 focus:outline-none focus:bg-white/5 transition-all font-sans"
-                        />
-                      </div>
-
-                      <div className="md:col-span-4">
-                        <label className="block text-[8px] font-sans text-white/40 uppercase tracking-widest mb-1">
-                          Video Link (YouTube, Drive, Vimeo, or .mp4)
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          placeholder="YouTube, Google Drive, or .mp4 / .mov URL"
-                          value={ep.videoUrl}
-                          onChange={(e) => {
-                            const newEps = [...episodes];
-                            newEps[idx].videoUrl = e.target.value;
-                            setEpisodes(newEps);
-                          }}
-                          className="w-full bg-white/5 hover:bg-white/10 text-[#F5F5F7] text-xs px-2.5 py-1.5 rounded border border-white/10 focus:border-amber-500/50 focus:outline-none focus:bg-white/5 transition-all font-sans"
-                        />
-                      </div>
-
-                      <div className="md:col-span-1 flex justify-end">
+                    <div key={ep.id} className="flex flex-col gap-2.5 bg-black/40 border border-white/10 p-3 rounded-lg relative">
+                      <div className="flex items-center justify-between border-b border-white/5 pb-1.5">
+                        <span className="text-[10px] font-mono font-bold text-amber-400 uppercase flex items-center gap-1.5">
+                          <span>Episode {idx + 1} Details</span>
+                        </span>
                         <button
                           type="button"
                           disabled={episodes.length <= 1}
                           onClick={() => {
                             setEpisodes(episodes.filter((_, i) => i !== idx));
                           }}
-                          className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer"
+                          className="px-2 py-0.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded text-[9px] font-mono uppercase disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer flex items-center gap-1"
                           title="Delete Episode"
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
+                          <Trash2 className="h-3 w-3" /> Remove
                         </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-start">
+                        {/* Thumbnail Preview */}
+                        <div className="md:col-span-3 flex flex-col gap-1">
+                          <label className="block text-[8px] font-sans text-amber-400 uppercase tracking-widest font-bold">
+                            Episode Thumbnail
+                          </label>
+                          <div className="relative aspect-video rounded overflow-hidden bg-black/80 border border-white/10 flex items-center justify-center text-white/30 text-[9px] font-mono">
+                            {ep.thumbnailUrl ? (
+                              <img 
+                                src={ep.thumbnailUrl} 
+                                alt={`Ep ${idx + 1}`} 
+                                className="w-full h-full object-cover"
+                                referrerPolicy="no-referrer"
+                              />
+                            ) : (
+                              <span>No Thumbnail</span>
+                            )}
+                          </div>
+                          <input
+                            type="text"
+                            placeholder="Thumbnail URL (or pick below)"
+                            value={ep.thumbnailUrl || ''}
+                            onChange={(e) => {
+                              const newEps = [...episodes];
+                              newEps[idx].thumbnailUrl = e.target.value;
+                              setEpisodes(newEps);
+                            }}
+                            className="w-full bg-white/5 text-[#F5F5F7] text-[10px] px-2 py-1 rounded border border-white/10 focus:border-amber-500/50 focus:outline-none font-sans"
+                          />
+                        </div>
+
+                        {/* Title & Duration */}
+                        <div className="md:col-span-9 grid grid-cols-1 md:grid-cols-12 gap-2">
+                          <div className="md:col-span-8">
+                            <label className="block text-[8px] font-sans text-white/40 uppercase tracking-widest mb-1">
+                              Episode Title
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              placeholder="e.g. Episode 1: Pilot"
+                              value={ep.title}
+                              onChange={(e) => {
+                                const newEps = [...episodes];
+                                newEps[idx].title = e.target.value;
+                                setEpisodes(newEps);
+                              }}
+                              className="w-full bg-white/5 hover:bg-white/10 text-[#F5F5F7] text-xs px-2.5 py-1.5 rounded border border-white/10 focus:border-amber-500/50 focus:outline-none focus:bg-white/5 transition-all font-sans"
+                            />
+                          </div>
+
+                          <div className="md:col-span-4">
+                            <label className="block text-[8px] font-sans text-white/40 uppercase tracking-widest mb-1">
+                              Duration
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              placeholder="e.g. 10m"
+                              value={ep.duration}
+                              onChange={(e) => {
+                                const newEps = [...episodes];
+                                newEps[idx].duration = e.target.value;
+                                setEpisodes(newEps);
+                              }}
+                              className="w-full bg-white/5 hover:bg-white/10 text-[#F5F5F7] text-xs px-2.5 py-1.5 rounded border border-white/10 focus:border-amber-500/50 focus:outline-none focus:bg-white/5 transition-all font-sans"
+                            />
+                          </div>
+
+                          <div className="md:col-span-12">
+                            <label className="block text-[8px] font-sans text-white/40 uppercase tracking-widest mb-1">
+                              Video Stream URL (YouTube, Drive, Vimeo, or .mp4)
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              placeholder="YouTube, Google Drive, or .mp4 / .mov URL"
+                              value={ep.videoUrl}
+                              onChange={(e) => {
+                                const newEps = [...episodes];
+                                newEps[idx].videoUrl = e.target.value;
+                                setEpisodes(newEps);
+                              }}
+                              className="w-full bg-white/5 hover:bg-white/10 text-[#F5F5F7] text-xs px-2.5 py-1.5 rounded border border-white/10 focus:border-amber-500/50 focus:outline-none focus:bg-white/5 transition-all font-sans"
+                            />
+                          </div>
+                        </div>
                       </div>
                     </div>
                   ))}
