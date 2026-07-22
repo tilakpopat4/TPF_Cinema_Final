@@ -8,7 +8,8 @@ import {
   Check, X, Save, Search, Settings, ShieldAlert, ArrowLeft, RefreshCw,
   ArrowUp, ArrowDown, Move, HardDrive, Server, Globe, Database, Copy, 
   ExternalLink, Zap, Video, ShieldCheck, Play, CheckCircle2, Sparkles, AlertCircle,
-  Upload, FileVideo, CloudUpload, ArrowRight, Clock, FolderPlus, Tv, Image
+  Upload, FileVideo, CloudUpload, ArrowRight, Clock, FolderPlus, Tv, Image,
+  Camera, MapPin, Instagram, Eye, Star, Award, Coins, QrCode, UserCheck
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -64,8 +65,21 @@ export default function AdminPanel({
     country: '',
     role: '',
     instagram: '',
-    portfolio: ''
+    portfolio: '',
+    upiId: '',
+    userId: ''
   });
+
+  // --- Inspection Modal State ---
+  const [inspectFilmmaker, setInspectFilmmaker] = useState<Filmmaker | null>(null);
+
+  const handleSetSpotlightFilmmaker = (fmId: string) => {
+    const selected = filmmakers.find(f => f.id === fmId);
+    if (!selected) return;
+    const remaining = filmmakers.filter(f => f.id !== fmId);
+    const updated = [selected, ...remaining];
+    onUpdateFilmmakers(updated);
+  };
 
   // --- Poster Artwork Tab state ---
   const [posterTab, setPosterTab] = useState<'portrait' | 'landscape'>('portrait');
@@ -251,10 +265,12 @@ export default function AdminPanel({
       name: '',
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&h=150&q=80',
       bio: '',
-      country: '',
-      role: 'Director',
+      country: 'India',
+      role: 'Director / Screenwriter',
       instagram: '',
-      portfolio: ''
+      portfolio: '',
+      upiId: '',
+      userId: ''
     });
   };
 
@@ -478,7 +494,10 @@ export default function AdminPanel({
         country: filmmakerForm.country || 'Global',
         role: filmmakerForm.role || 'Director',
         instagram: filmmakerForm.instagram,
-        portfolio: filmmakerForm.portfolio
+        portfolio: filmmakerForm.portfolio,
+        upiId: filmmakerForm.upiId,
+        userId: filmmakerForm.userId,
+        createdAt: Date.now()
       };
       onUpdateFilmmakers([newFm, ...filmmakers]);
     } else if (editingId) {
@@ -489,6 +508,9 @@ export default function AdminPanel({
         return fm;
       });
       onUpdateFilmmakers(updated);
+      if (inspectFilmmaker && inspectFilmmaker.id === editingId) {
+        setInspectFilmmaker({ ...inspectFilmmaker, ...filmmakerForm } as Filmmaker);
+      }
     }
 
     setIsAddingNew(false);
@@ -548,7 +570,10 @@ export default function AdminPanel({
   const filteredFilmmakersList = filmmakers.filter(fm => 
     fm.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     fm.country.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    fm.role.toLowerCase().includes(searchQuery.toLowerCase())
+    fm.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (fm.bio && fm.bio.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (fm.upiId && fm.upiId.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (fm.userId && fm.userId.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const filteredUpcomingList = upcomingFilms.filter(uf => 
@@ -1402,13 +1427,13 @@ export default function AdminPanel({
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-mono uppercase text-white/50">Country</label>
+                    <label className="text-[10px] font-mono uppercase text-white/50">Country / Location</label>
                     <input
                       type="text"
                       value={filmmakerForm.country || ''}
                       onChange={(e) => setFilmmakerForm({ ...filmmakerForm, country: e.target.value })}
                       className="bg-black border border-white/10 p-2 rounded text-white focus:outline-none focus:border-amber-500/50"
-                      placeholder="e.g. Canada"
+                      placeholder="e.g. India"
                     />
                   </div>
 
@@ -1419,7 +1444,7 @@ export default function AdminPanel({
                       value={filmmakerForm.role || ''}
                       onChange={(e) => setFilmmakerForm({ ...filmmakerForm, role: e.target.value })}
                       className="bg-black border border-white/10 p-2 rounded text-white focus:outline-none focus:border-amber-500/50"
-                      placeholder="e.g. Director / Cinematographer"
+                      placeholder="e.g. Director / Screenwriter"
                     />
                   </div>
                 </div>
@@ -1448,19 +1473,56 @@ export default function AdminPanel({
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-mono uppercase text-white/50">Avatar Image URL</label>
-                  <input
-                    type="url"
-                    value={filmmakerForm.avatar || ''}
-                    onChange={(e) => setFilmmakerForm({ ...filmmakerForm, avatar: e.target.value })}
-                    className="bg-black border border-white/10 p-2 rounded text-white focus:outline-none focus:border-amber-500/50"
-                    placeholder="https://..."
-                  />
+                {/* UPI Payment ID & Linked User Auth UID */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-mono uppercase text-amber-400/90 font-bold flex items-center gap-1">
+                      <Coins className="h-3 w-3" /> GPay / UPI Payment ID
+                    </label>
+                    <input
+                      type="text"
+                      value={filmmakerForm.upiId || ''}
+                      onChange={(e) => setFilmmakerForm({ ...filmmakerForm, upiId: e.target.value })}
+                      className="bg-black border border-white/10 p-2 rounded text-white focus:outline-none focus:border-amber-500/50 font-mono text-[11px]"
+                      placeholder="e.g. director@upi"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-mono uppercase text-white/50 flex items-center gap-1">
+                      <UserCheck className="h-3 w-3" /> Linked User Auth UID
+                    </label>
+                    <input
+                      type="text"
+                      value={filmmakerForm.userId || ''}
+                      onChange={(e) => setFilmmakerForm({ ...filmmakerForm, userId: e.target.value })}
+                      className="bg-black border border-white/10 p-2 rounded text-white focus:outline-none focus:border-amber-500/50 font-mono text-[11px]"
+                      placeholder="e.g. auth-uid-xyz"
+                    />
+                  </div>
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-mono uppercase text-white/50">Short Bio</label>
+                  <label className="text-[10px] font-mono uppercase text-white/50">Avatar Image URL (or Google Drive Link)</label>
+                  <div className="flex items-center gap-2.5">
+                    <img 
+                      src={getDirectImageUrl(filmmakerForm.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&h=150&q=80')} 
+                      alt="" 
+                      className="w-10 h-10 object-cover rounded-full border border-amber-500/50 bg-black shrink-0"
+                      referrerPolicy="no-referrer"
+                    />
+                    <input
+                      type="url"
+                      value={filmmakerForm.avatar || ''}
+                      onChange={(e) => setFilmmakerForm({ ...filmmakerForm, avatar: e.target.value })}
+                      className="flex-1 bg-black border border-white/10 p-2 rounded text-white focus:outline-none focus:border-amber-500/50"
+                      placeholder="https://..."
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-mono uppercase text-white/50">Short Bio / Director Statement</label>
                   <textarea
                     rows={4}
                     value={filmmakerForm.bio || ''}
@@ -1472,10 +1534,10 @@ export default function AdminPanel({
 
                 <button
                   type="submit"
-                  className="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-black rounded font-bold uppercase tracking-wider transition-colors cursor-pointer mt-2 flex items-center justify-center gap-1.5"
+                  className="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-black rounded font-bold uppercase tracking-wider transition-colors cursor-pointer mt-2 flex items-center justify-center gap-1.5 shadow-lg"
                 >
                   <Save className="h-4 w-4" />
-                  Save Profile
+                  Save Filmmaker Profile
                 </button>
               </form>
             )}
@@ -1735,69 +1797,152 @@ export default function AdminPanel({
               </table>
             )}
 
-            {/* B. FILMMAKERS TABLE LIST */}
+            {/* B. FILMMAKERS MANAGEMENT DASHBOARD & TABLE LIST */}
             {activeTab === 'filmmakers' && (
-              <table className="w-full text-left text-xs text-white/70 border-collapse">
-                <thead>
-                  <tr className="border-b border-white/10 text-[10px] font-mono text-white/40 uppercase">
-                    <th className="py-2.5 px-2">Filmmaker</th>
-                    <th className="py-2.5 px-2">Bio</th>
-                    <th className="py-2.5 px-2">Socials</th>
-                    <th className="py-2.5 px-2 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {filteredFilmmakersList.length === 0 ? (
-                    <tr>
-                      <td colSpan={4} className="py-12 text-center text-white/30 font-mono">
-                        No filmmakers found.
-                      </td>
+              <div className="flex flex-col gap-4">
+                {/* Top Filmmakers Overview Stats */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="bg-black/60 border border-white/10 p-3 rounded-lg flex flex-col gap-1">
+                    <span className="text-[9px] font-mono uppercase text-white/40">Total Directors</span>
+                    <span className="text-xl font-bold text-amber-400 font-display">{filmmakers.length} Profiles</span>
+                  </div>
+                  <div className="bg-black/60 border border-white/10 p-3 rounded-lg flex flex-col gap-1">
+                    <span className="text-[9px] font-mono uppercase text-white/40">Spotlight Creator</span>
+                    <span className="text-xs font-bold text-white truncate font-display flex items-center gap-1">
+                      <Sparkles className="h-3.5 w-3.5 text-amber-400 fill-amber-400 shrink-0" />
+                      {filmmakers[0]?.name || 'None'}
+                    </span>
+                  </div>
+                  <div className="bg-black/60 border border-white/10 p-3 rounded-lg flex flex-col gap-1">
+                    <span className="text-[9px] font-mono uppercase text-white/40">Catalog Works</span>
+                    <span className="text-xl font-bold text-white font-display">{films.length} Titles</span>
+                  </div>
+                  <div className="bg-black/60 border border-white/10 p-3 rounded-lg flex flex-col gap-1">
+                    <span className="text-[9px] font-mono uppercase text-white/40">Platform Views</span>
+                    <span className="text-xl font-bold text-emerald-400 font-display">
+                      {films.reduce((acc, f) => acc + (f.views || 0), 0).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+
+                <table className="w-full text-left text-xs text-white/70 border-collapse">
+                  <thead>
+                    <tr className="border-b border-white/10 text-[10px] font-mono text-white/40 uppercase">
+                      <th className="py-2.5 px-2">Filmmaker Profile</th>
+                      <th className="py-2.5 px-2">Bio & Payment ID</th>
+                      <th className="py-2.5 px-2">Socials & Links</th>
+                      <th className="py-2.5 px-2">Catalog & Reach</th>
+                      <th className="py-2.5 px-2 text-right">Admin Control</th>
                     </tr>
-                  ) : (
-                    filteredFilmmakersList.map((fm) => (
-                      <tr key={fm.id} className="hover:bg-white/[0.02] transition-colors group">
-                        <td className="py-3 px-2 flex items-center gap-2.5">
-                          <img 
-                            src={getDirectImageUrl(fm.avatar)} 
-                            alt="" 
-                            className="w-9 h-9 object-cover rounded-full bg-black/40 border border-white/10 shrink-0"
-                            referrerPolicy="no-referrer"
-                          />
-                          <div className="flex flex-col">
-                            <span className="font-bold text-white">{fm.name}</span>
-                            <span className="text-[10px] font-mono text-white/40">{fm.role} • {fm.country}</span>
-                          </div>
-                        </td>
-                        <td className="py-3 px-2 text-xs text-white/60 font-sans max-w-[200px] truncate" title={fm.bio}>
-                          {fm.bio}
-                        </td>
-                        <td className="py-3 px-2 font-mono text-[10px] text-white/40 flex flex-col">
-                          <span className="text-amber-500/90">{fm.instagram || 'No instagram'}</span>
-                          <span>{fm.portfolio || 'No portfolio'}</span>
-                        </td>
-                        <td className="py-3 px-2 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
-                            <button
-                              onClick={() => startEditFilmmaker(fm)}
-                              className="p-1.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded text-white/70 hover:text-white cursor-pointer transition-all"
-                              title="Edit profile"
-                            >
-                              <Edit className="h-3.5 w-3.5" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteFilmmaker(fm.id)}
-                              className="p-1.5 bg-white/5 hover:bg-red-500/25 border border-white/5 hover:border-red-500/20 rounded text-white/40 hover:text-red-400 cursor-pointer transition-all"
-                              title="Delete profile"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {filteredFilmmakersList.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="py-12 text-center text-white/30 font-mono">
+                          No filmmakers found.
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ) : (
+                      filteredFilmmakersList.map((fm) => {
+                        const fmFilms = films.filter(f => f.filmmakerId === fm.id || f.director === fm.name);
+                        const totalViews = fmFilms.reduce((acc, f) => acc + (f.views || 0), 0);
+                        const isSpotlight = filmmakers[0]?.id === fm.id;
+
+                        return (
+                          <tr key={fm.id} className="hover:bg-white/[0.02] transition-colors group">
+                            <td className="py-3 px-2">
+                              <div className="flex items-center gap-2.5">
+                                <img 
+                                  src={getDirectImageUrl(fm.avatar)} 
+                                  alt="" 
+                                  className="w-10 h-10 object-cover rounded-full bg-black/40 border border-amber-500/30 shrink-0"
+                                  referrerPolicy="no-referrer"
+                                />
+                                <div className="flex flex-col">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="font-bold text-white">{fm.name}</span>
+                                    {isSpotlight && (
+                                      <span className="text-[8px] font-mono font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 px-1.5 py-0.5 rounded uppercase flex items-center gap-0.5">
+                                        <Sparkles className="h-2.5 w-2.5" /> Spotlight
+                                      </span>
+                                    )}
+                                  </div>
+                                  <span className="text-[10px] font-mono text-white/40">{fm.role} • {fm.country}</span>
+                                </div>
+                              </div>
+                            </td>
+
+                            <td className="py-3 px-2 text-xs font-sans max-w-[220px]">
+                              <p className="text-white/70 line-clamp-1 text-[11px]" title={fm.bio}>{fm.bio || 'No bio available'}</p>
+                              <div className="flex items-center gap-2 mt-1 text-[9px] font-mono">
+                                {fm.upiId ? (
+                                  <span className="text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                                    ⚡ {fm.upiId}
+                                  </span>
+                                ) : (
+                                  <span className="text-white/30">No UPI ID</span>
+                                )}
+                                {fm.userId && (
+                                  <span className="text-white/40 bg-white/5 px-1.5 py-0.5 rounded">
+                                    UID: {fm.userId.slice(0, 8)}...
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+
+                            <td className="py-3 px-2 font-mono text-[10px] text-white/50 flex flex-col gap-0.5">
+                              <span className="text-amber-400">{fm.instagram || 'No instagram'}</span>
+                              <span className="truncate max-w-[120px]">{fm.portfolio || 'No portfolio'}</span>
+                            </td>
+
+                            <td className="py-3 px-2 font-mono text-[10px]">
+                              <span className="text-white font-bold">{fmFilms.length} Published</span>
+                              <span className="block text-white/40">{totalViews.toLocaleString()} Views</span>
+                            </td>
+
+                            <td className="py-3 px-2 text-right">
+                              <div className="flex items-center justify-end gap-1.5">
+                                <button
+                                  onClick={() => handleSetSpotlightFilmmaker(fm.id)}
+                                  className={`p-1.5 rounded cursor-pointer transition-all border ${
+                                    isSpotlight 
+                                      ? 'bg-amber-500 text-black border-amber-400' 
+                                      : 'bg-white/5 hover:bg-amber-500/20 border-white/5 text-white/50 hover:text-amber-400'
+                                  }`}
+                                  title={isSpotlight ? 'Current Creator of the Week' : 'Set as Spotlight Creator'}
+                                >
+                                  <Star className="h-3.5 w-3.5 fill-current" />
+                                </button>
+                                <button
+                                  onClick={() => setInspectFilmmaker(fm)}
+                                  className="p-1.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded text-amber-300 cursor-pointer transition-all"
+                                  title="Inspect full profile & catalog"
+                                >
+                                  <Eye className="h-3.5 w-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => startEditFilmmaker(fm)}
+                                  className="p-1.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded text-white/70 hover:text-white cursor-pointer transition-all"
+                                  title="Edit profile"
+                                >
+                                  <Edit className="h-3.5 w-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteFilmmaker(fm.id)}
+                                  className="p-1.5 bg-white/5 hover:bg-red-500/25 border border-white/5 hover:border-red-500/20 rounded text-white/40 hover:text-red-400 cursor-pointer transition-all"
+                                  title="Delete profile"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
             )}
 
             {/* C. UPCOMING TRAILERS TABLE LIST */}
@@ -2785,6 +2930,244 @@ export default function AdminPanel({
                 </div>
               );
             })()}
+          </div>
+        </div>
+      )}
+
+      {/* FILMMAKER INSPECTION & MANAGEMENT MODAL OVERLAY */}
+      {inspectFilmmaker && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+          <div className="bg-[#121214] border border-white/15 rounded-xl max-w-4xl w-full p-6 sm:p-8 flex flex-col gap-6 max-h-[90vh] overflow-y-auto shadow-2xl relative my-auto">
+            
+            {/* Header / Close button */}
+            <div className="flex items-start justify-between border-b border-white/10 pb-4">
+              <div className="flex items-center gap-4">
+                <img 
+                  src={getDirectImageUrl(inspectFilmmaker.avatar)} 
+                  alt="" 
+                  className="w-16 h-16 rounded-full object-cover border-2 border-amber-500/60 shadow-lg bg-black"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-xl font-bold text-white font-display">{inspectFilmmaker.name}</h3>
+                    {filmmakers[0]?.id === inspectFilmmaker.id && (
+                      <span className="text-[9px] font-mono font-bold bg-amber-500 text-black px-2 py-0.5 rounded uppercase">
+                        Spotlight Creator
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs font-mono text-amber-400">{inspectFilmmaker.role} • {inspectFilmmaker.country}</span>
+                  <span className="text-[10px] font-mono text-white/40 mt-0.5">
+                    ID: {inspectFilmmaker.id} {inspectFilmmaker.userId ? `| Auth UID: ${inspectFilmmaker.userId}` : '| Unlinked Profile'}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setInspectFilmmaker(null)}
+                className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-white/60 hover:text-white transition-all cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Quick Action Controls */}
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-black/40 border border-white/5 p-3 rounded-lg">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => {
+                    handleSetSpotlightFilmmaker(inspectFilmmaker.id);
+                  }}
+                  className={`px-3 py-1.5 rounded text-xs font-mono font-bold uppercase transition-all flex items-center gap-1.5 cursor-pointer ${
+                    filmmakers[0]?.id === inspectFilmmaker.id
+                      ? 'bg-amber-500 text-black shadow'
+                      : 'bg-white/10 hover:bg-amber-500/20 text-white border border-white/10 hover:border-amber-500/40'
+                  }`}
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  {filmmakers[0]?.id === inspectFilmmaker.id ? 'Spotlight Creator (Active)' : 'Set as Spotlight Creator'}
+                </button>
+
+                <button
+                  onClick={() => {
+                    startEditFilmmaker(inspectFilmmaker);
+                    setInspectFilmmaker(null);
+                  }}
+                  className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white border border-white/10 rounded text-xs font-mono font-bold uppercase transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Edit className="h-3.5 w-3.5" />
+                  Edit Profile Fields
+                </button>
+              </div>
+
+              <button
+                onClick={() => {
+                  setIsAddingNew(true);
+                  setEditingId(null);
+                  setFilmForm({
+                    title: '',
+                    type: 'film',
+                    description: '',
+                    duration: '15m',
+                    genre: ['Drama'],
+                    director: inspectFilmmaker.name,
+                    releaseYear: new Date().getFullYear(),
+                    posterUrl: '',
+                    videoUrl: '',
+                    cameraUsed: 'Sony FX3',
+                    filmmakerId: inspectFilmmaker.id,
+                    isFeatured: false,
+                    upiId: inspectFilmmaker.upiId || ''
+                  });
+                  setActiveTab('films');
+                  setInspectFilmmaker(null);
+                }}
+                className="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs font-mono rounded uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow"
+              >
+                <Plus className="h-4 w-4" />
+                Add Film for {inspectFilmmaker.name}
+              </button>
+            </div>
+
+            {/* Profile Detail Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-sans">
+              <div className="bg-black/50 border border-white/5 p-4 rounded-lg flex flex-col gap-2">
+                <span className="text-[10px] font-mono text-white/40 uppercase font-bold">Bio & Statement</span>
+                <p className="text-white/80 leading-relaxed italic">{inspectFilmmaker.bio || 'No bio provided.'}</p>
+              </div>
+
+              <div className="bg-black/50 border border-white/5 p-4 rounded-lg flex flex-col gap-2.5">
+                <span className="text-[10px] font-mono text-white/40 uppercase font-bold">Contact & Payment Links</span>
+                <div className="flex flex-col gap-1.5 text-[11px] font-mono">
+                  <div className="flex items-center justify-between text-white/60">
+                    <span>Instagram:</span>
+                    <span className="text-amber-400 font-bold">{inspectFilmmaker.instagram || 'None'}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-white/60">
+                    <span>Portfolio:</span>
+                    <span className="text-white font-bold truncate max-w-[150px]">{inspectFilmmaker.portfolio || 'None'}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-white/60 pt-1 border-t border-white/5">
+                    <span>GPay / UPI ID:</span>
+                    <span className="text-emerald-400 font-bold">{inspectFilmmaker.upiId || 'Not set'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Stats Analytics */}
+              {(() => {
+                const fmFilms = films.filter(f => f.filmmakerId === inspectFilmmaker.id || f.director === inspectFilmmaker.name);
+                const totalViews = fmFilms.reduce((acc, f) => acc + (f.views || 0), 0);
+                const totalLikes = fmFilms.reduce((acc, f) => acc + (f.likes || 0), 0);
+                const totalFunds = fmFilms.reduce((acc, f) => acc + (f.fundsReceived || 0), 0);
+                return (
+                  <div className="bg-black/50 border border-white/5 p-4 rounded-lg flex flex-col gap-2">
+                    <span className="text-[10px] font-mono text-white/40 uppercase font-bold">Performance Metrics</span>
+                    <div className="grid grid-cols-2 gap-2 mt-1">
+                      <div className="flex flex-col bg-white/5 p-2 rounded">
+                        <span className="text-[9px] font-mono text-white/50">Total Works</span>
+                        <span className="text-base font-bold text-white font-display">{fmFilms.length}</span>
+                      </div>
+                      <div className="flex flex-col bg-white/5 p-2 rounded">
+                        <span className="text-[9px] font-mono text-white/50">Total Views</span>
+                        <span className="text-base font-bold text-amber-400 font-display">{totalViews.toLocaleString()}</span>
+                      </div>
+                      <div className="flex flex-col bg-white/5 p-2 rounded">
+                        <span className="text-[9px] font-mono text-white/50">Total Likes</span>
+                        <span className="text-base font-bold text-rose-400 font-display">{totalLikes}</span>
+                      </div>
+                      <div className="flex flex-col bg-white/5 p-2 rounded">
+                        <span className="text-[9px] font-mono text-white/50">Funds Raised</span>
+                        <span className="text-base font-bold text-emerald-400 font-display">₹{totalFunds}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Filmmaker's Film & Series Catalog */}
+            <div className="flex flex-col gap-3 pt-2">
+              <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-amber-400 flex items-center justify-between">
+                <span>Published Works ({films.filter(f => f.filmmakerId === inspectFilmmaker.id || f.director === inspectFilmmaker.name).length} Titles)</span>
+              </h4>
+
+              {(() => {
+                const fmFilms = films.filter(f => f.filmmakerId === inspectFilmmaker.id || f.director === inspectFilmmaker.name);
+                if (fmFilms.length === 0) {
+                  return (
+                    <div className="p-8 text-center bg-black/40 border border-white/5 rounded-lg text-white/40 font-mono text-xs">
+                      No films or web series uploaded by this filmmaker yet.
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                    {fmFilms.map(film => (
+                      <div key={film.id} className="bg-black/60 border border-white/10 rounded-lg p-3 flex flex-col gap-2 relative">
+                        <div className="flex gap-3">
+                          <img 
+                            src={getDirectImageUrl(film.posterUrl)} 
+                            alt="" 
+                            className="w-12 h-16 object-cover rounded bg-black shrink-0 border border-white/10"
+                            referrerPolicy="no-referrer"
+                          />
+                          <div className="flex flex-col flex-1 min-w-0">
+                            <span className="font-bold text-white text-xs truncate">{film.title}</span>
+                            <span className="text-[10px] font-mono text-amber-400 uppercase">{film.type === 'series' ? 'Web Series' : 'Short Film'} • {film.duration}</span>
+                            <span className="text-[9px] font-mono text-white/40">{film.views || 0} Views • {film.likes || 0} Likes</span>
+                            <span className={`text-[9px] font-mono uppercase font-bold mt-1 px-1.5 py-0.5 rounded w-fit ${
+                              film.approvalStatus === 'approved' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'
+                            }`}>
+                              {film.approvalStatus || 'approved'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Film Control Buttons */}
+                        <div className="flex items-center justify-between pt-2 border-t border-white/10 text-[10px] font-mono">
+                          <button
+                            onClick={() => {
+                              const updated = films.map(f => f.id === film.id ? { ...f, isFeatured: !f.isFeatured } : f);
+                              onUpdateFilms(updated);
+                            }}
+                            className={`px-2 py-1 rounded text-[9px] font-bold uppercase transition-all ${
+                              film.isFeatured ? 'bg-amber-500 text-black' : 'bg-white/5 hover:bg-white/10 text-white/60'
+                            }`}
+                          >
+                            {film.isFeatured ? '★ Featured Hero' : 'Feature'}
+                          </button>
+
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => {
+                                startEditFilm(film);
+                                setActiveTab('films');
+                                setInspectFilmmaker(null);
+                              }}
+                              className="p-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded text-white"
+                              title="Edit Film"
+                            >
+                              <Edit className="h-3 w-3" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteFilm(film.id)}
+                              className="p-1 bg-white/5 hover:bg-rose-500/30 border border-white/10 rounded text-rose-400"
+                              title="Delete Film"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
+
           </div>
         </div>
       )}
