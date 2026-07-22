@@ -1333,7 +1333,7 @@ export default function App() {
       <footer className="mt-auto py-10 bg-black/95 border-t border-white/5 text-center text-xs text-white/40 font-sans tracking-wide">
         <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="text-white/60 font-bold tracking-wider text-sm">
-            TPF CINEMAS
+            TPF CINEMAS | AN OTT FOR BEGINNERS
           </div>
           <div className="text-[11px] text-white/30 font-medium tracking-normal">
             &copy; {new Date().getFullYear()} TPF Cinemas. All Rights Reserved.

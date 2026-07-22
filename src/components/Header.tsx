@@ -54,7 +54,8 @@ export default function Header({
           <img
             id="tpf-cinemas-logo"
             src="https://lh3.googleusercontent.com/d/1JPXumtChr94uaSSJ8rXTo8d4yJayFjzS"
-            alt="TPF Cinemas"
+            alt="TPF Cinemas | An OTT For Beginners"
+            title="TPF Cinemas | An OTT For Beginners"
             referrerPolicy="no-referrer"
             className="h-[60px] sm:h-[72px] w-auto object-contain select-none transition-all duration-300 group-hover:scale-[1.02]"
           />

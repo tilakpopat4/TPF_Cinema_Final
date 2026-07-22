@@ -1,5 +1,5 @@
 {
-  "name": "TPF Cinemas",
+  "name": "TPF Cinemas | An OTT For Beginners",
   "description": "An OTT platform for beginner filmmakers to easily screen their films and series without subscription models, featuring filmmaker submissions, community ratings, watchlists, and virtual screening rooms.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
