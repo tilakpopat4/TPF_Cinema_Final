@@ -1,6 +1,6 @@
 /**
  * Utility to process user-input URLs.
- * Converts Google Drive sharing links into direct/embeddable URLs for images.
+ * Converts Google Drive sharing links into direct/embeddable URLs for images & videos.
  */
 
 export function getDirectImageUrl(url: string | undefined): string {
@@ -27,3 +27,54 @@ export function getDirectImageUrl(url: string | undefined): string {
 
   return trimmed;
 }
+
+export interface VideoEmbedData {
+  isEmbed: boolean;
+  embedUrl: string;
+}
+
+export function getVideoEmbedData(url: string | undefined): VideoEmbedData {
+  if (!url) return { isEmbed: false, embedUrl: '' };
+  const trimmed = url.trim();
+
+  // 1. YouTube Matches
+  const ytWatchRegex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/;
+  const ytMatch = trimmed.match(ytWatchRegex);
+  if (ytMatch && ytMatch[1]) {
+    return {
+      isEmbed: true,
+      embedUrl: `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1&rel=0`
+    };
+  }
+
+  // 2. Google Drive Matches
+  const gdFileRegex = /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/;
+  const gdOpenRegex = /drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/;
+  const gdUcRegex = /drive\.google\.com\/uc\?id=([a-zA-Z0-9_-]+)/;
+  const gdDocsUcRegex = /docs\.google\.com\/uc\?id=([a-zA-Z0-9_-]+)/;
+
+  const gdMatch = trimmed.match(gdFileRegex) ||
+                  trimmed.match(gdOpenRegex) ||
+                  trimmed.match(gdUcRegex) ||
+                  trimmed.match(gdDocsUcRegex);
+
+  if (gdMatch && gdMatch[1]) {
+    return {
+      isEmbed: true,
+      embedUrl: `https://drive.google.com/file/d/${gdMatch[1]}/preview`
+    };
+  }
+
+  // 3. Vimeo Matches
+  const vimeoRegex = /(?:vimeo\.com\/|player\.vimeo\.com\/video\/)([0-9]+)/;
+  const vimeoMatch = trimmed.match(vimeoRegex);
+  if (vimeoMatch && vimeoMatch[1]) {
+    return {
+      isEmbed: true,
+      embedUrl: `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=1`
+    };
+  }
+
+  return { isEmbed: false, embedUrl: trimmed };
+}
+

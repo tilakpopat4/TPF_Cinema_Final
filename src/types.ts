@@ -42,7 +42,8 @@ export interface Film {
   genre: string[];
   director: string;
   releaseYear: number;
-  posterUrl: string;
+  posterUrl: string; // Portrait poster (2:3 aspect ratio)
+  landscapePosterUrl?: string; // Landscape poster (16:9 aspect ratio)
   videoUrl: string; // Direct link or mock stream
   cameraUsed?: string; // e.g., "Sony A7III"
   filmmakerId: string;
@@ -56,7 +57,8 @@ export interface Film {
   approvalStatus?: 'approved' | 'pending' | 'rejected';
   fundsReceived?: number;
   submittedByUid?: string;
-  posterPositionY?: number; // percentage (0 to 100) for vertical crop/pan
+  posterPositionY?: number; // percentage (0 to 100) for vertical crop/pan of portrait poster
+  landscapePosterPositionY?: number; // percentage (0 to 100) for vertical crop/pan of landscape poster
 }
 
 export interface UpcomingFilm {

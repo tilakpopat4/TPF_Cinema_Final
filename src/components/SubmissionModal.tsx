@@ -76,6 +76,9 @@ export default function SubmissionModal({ onClose, onSubmit, prefilledUpiId = ''
   const [posterType, setPosterType] = useState<'preset' | 'custom'>('custom');
   const [selectedPosterIdx, setSelectedPosterIdx] = useState(0);
   const [customPosterUrl, setCustomPosterUrl] = useState('');
+  const [customLandscapePosterUrl, setCustomLandscapePosterUrl] = useState('');
+  const [portraitPan, setPortraitPan] = useState(50);
+  const [landscapePan, setLandscapePan] = useState(50);
 
   // Video selection
   const [videoType, setVideoType] = useState<'preset' | 'custom'>('custom');
@@ -188,6 +191,7 @@ Best Regards,
     }
 
     const posterUrl = customPosterUrl.trim() || POSTER_PRESETS[0].url;
+    const landscapePosterUrl = customLandscapePosterUrl.trim() || undefined;
     const videoUrl = type === 'series' ? episodes[0].videoUrl.trim() : (customVideoUrl.trim() || VIDEO_PRESETS[0].url);
 
     onSubmit({
@@ -199,8 +203,10 @@ Best Regards,
       director: director.trim(),
       releaseYear: new Date().getFullYear(),
       posterUrl,
+      landscapePosterUrl,
       videoUrl,
-      posterPositionY: 50,
+      posterPositionY: portraitPan,
+      landscapePosterPositionY: landscapePan,
       episodes: type === 'series' ? episodes.map(ep => ({ ...ep, title: ep.title.trim(), duration: ep.duration.trim(), videoUrl: ep.videoUrl.trim() })) : undefined,
       filmmakerId: `fm-${Math.random().toString(36).substr(2, 4)}`, // mock new id
       upiId: upiId.trim() || undefined,
@@ -544,23 +550,103 @@ Best Regards,
             )}
           </div>
 
-          {/* Section 2: Film Poster Art */}
+          {/* Section 2: Film Poster Art (Portrait & Landscape) */}
           <div className="flex flex-col gap-4 shrink-0">
             <h3 className="text-[10px] font-sans font-bold tracking-widest text-white/40 uppercase border-b border-white/5 pb-1">
-              2. Film Poster Art
+              2. Film Poster Art (Portrait & Landscape)
             </h3>
 
-            <div>
-              <label className="block text-[9px] font-sans text-white/40 uppercase tracking-widest mb-1.5">Poster Image URL</label>
-              <input
-                id="submit-custom-poster-input"
-                type="url"
-                required
-                placeholder="Paste a direct URL of your poster image (Unsplash, Imgur, etc.)"
-                value={customPosterUrl}
-                onChange={(e) => setCustomPosterUrl(e.target.value)}
-                className="w-full bg-white/5 hover:bg-white/10 text-[#F5F5F7] text-xs px-3 py-2.5 rounded border border-white/10 focus:border-amber-500/50 focus:outline-none focus:bg-white/5 transition-all font-sans"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Portrait Poster */}
+              <div className="flex flex-col gap-2 bg-white/5 p-3 rounded border border-white/10">
+                <div className="flex items-center justify-between">
+                  <label className="text-[9px] font-sans text-amber-400 uppercase tracking-widest font-bold">
+                    Portrait Poster (2:3 Ratio)
+                  </label>
+                  <span className="text-[8px] font-mono text-white/40">Vertical Cards</span>
+                </div>
+                <input
+                  id="submit-custom-poster-input"
+                  type="url"
+                  required
+                  placeholder="Paste direct portrait URL (Unsplash, Drive...)"
+                  value={customPosterUrl}
+                  onChange={(e) => setCustomPosterUrl(e.target.value)}
+                  className="w-full bg-black/40 text-[#F5F5F7] text-xs px-2.5 py-2 rounded border border-white/10 focus:border-amber-500/50 focus:outline-none transition-all font-sans"
+                />
+
+                {customPosterUrl && (
+                  <div className="flex flex-col gap-2 pt-1 border-t border-white/5">
+                    <div className="flex items-center justify-between text-[9px] font-mono text-white/60">
+                      <span>Pan Up/Down ({portraitPan}%)</span>
+                      <button 
+                        type="button" 
+                        onClick={() => setPortraitPan(50)} 
+                        className="text-amber-400 hover:underline text-[8px]"
+                      >
+                        Reset Center
+                      </button>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={portraitPan}
+                      onChange={(e) => setPortraitPan(Number(e.target.value))}
+                      className="w-full accent-amber-500 bg-neutral-800 rounded appearance-none h-1.5 cursor-pointer"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Landscape Poster */}
+              <div className="flex flex-col gap-2 bg-white/5 p-3 rounded border border-white/10">
+                <div className="flex items-center justify-between">
+                  <label className="text-[9px] font-sans text-amber-400 uppercase tracking-widest font-bold">
+                    Landscape Poster (16:9 Banner)
+                  </label>
+                  {customPosterUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setCustomLandscapePosterUrl(customPosterUrl)}
+                      className="text-[8px] font-mono text-amber-400 hover:underline bg-amber-500/10 px-1.5 py-0.5 rounded"
+                    >
+                      Use Portrait URL
+                    </button>
+                  )}
+                </div>
+                <input
+                  id="submit-custom-landscape-poster-input"
+                  type="url"
+                  placeholder="Paste direct landscape URL (Optional)"
+                  value={customLandscapePosterUrl}
+                  onChange={(e) => setCustomLandscapePosterUrl(e.target.value)}
+                  className="w-full bg-black/40 text-[#F5F5F7] text-xs px-2.5 py-2 rounded border border-white/10 focus:border-amber-500/50 focus:outline-none transition-all font-sans"
+                />
+
+                {(customLandscapePosterUrl || customPosterUrl) && (
+                  <div className="flex flex-col gap-2 pt-1 border-t border-white/5">
+                    <div className="flex items-center justify-between text-[9px] font-mono text-white/60">
+                      <span>Pan Up/Down ({landscapePan}%)</span>
+                      <button 
+                        type="button" 
+                        onClick={() => setLandscapePan(50)} 
+                        className="text-amber-400 hover:underline text-[8px]"
+                      >
+                        Reset Center
+                      </button>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={landscapePan}
+                      onChange={(e) => setLandscapePan(Number(e.target.value))}
+                      className="w-full accent-amber-500 bg-neutral-800 rounded appearance-none h-1.5 cursor-pointer"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
