@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Film, Filmmaker, UpcomingFilm 
 } from '../types';
@@ -11,7 +11,7 @@ import {
   ExternalLink, Zap, Video, ShieldCheck, Play, CheckCircle2, Sparkles, AlertCircle,
   Upload, FileVideo, CloudUpload, ArrowRight, Clock, FolderPlus, Tv, Image,
   Camera, MapPin, Instagram, Eye, Star, Award, Coins, QrCode, UserCheck,
-  Cloud, Link as LinkIcon
+  Cloud, Link as LinkIcon, Lock, Key, EyeOff
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -37,6 +37,89 @@ export default function AdminPanel({
 }: AdminPanelProps) {
   const [activeTab, setActiveTab] = useState<AdminTab>('films');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // --- Password Protection & Rate Limiting ---
+  const ADMIN_PASSWORD = 'TPFCinemas_2952';
+  const MAX_ATTEMPTS = 5;
+  const LOCKOUT_SECONDS = 45;
+
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return sessionStorage.getItem('tpf_admin_auth') === 'true';
+  });
+  const [passwordInput, setPasswordInput] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  // Rate limiting state with localStorage persistence
+  const [failedAttempts, setFailedAttempts] = useState<number>(() => {
+    const saved = localStorage.getItem('tpf_admin_failed_attempts');
+    return saved ? parseInt(saved, 10) : 0;
+  });
+
+  const [lockoutTimeRemaining, setLockoutTimeRemaining] = useState<number>(() => {
+    const lockoutUntil = localStorage.getItem('tpf_admin_lockout_until');
+    if (lockoutUntil) {
+      const remaining = Math.ceil((parseInt(lockoutUntil, 10) - Date.now()) / 1000);
+      return remaining > 0 ? remaining : 0;
+    }
+    return 0;
+  });
+
+  // Countdown timer effect for rate limiting lockout
+  useEffect(() => {
+    if (lockoutTimeRemaining <= 0) return;
+
+    const timer = setInterval(() => {
+      setLockoutTimeRemaining((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          localStorage.removeItem('tpf_admin_lockout_until');
+          localStorage.setItem('tpf_admin_failed_attempts', '0');
+          setFailedAttempts(0);
+          setAuthError(null);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [lockoutTimeRemaining]);
+
+  const handleAuthenticate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (lockoutTimeRemaining > 0) return;
+
+    if (passwordInput === ADMIN_PASSWORD) {
+      setIsAuthenticated(true);
+      sessionStorage.setItem('tpf_admin_auth', 'true');
+      localStorage.removeItem('tpf_admin_failed_attempts');
+      localStorage.removeItem('tpf_admin_lockout_until');
+      setFailedAttempts(0);
+      setAuthError(null);
+      setPasswordInput('');
+    } else {
+      const newAttempts = failedAttempts + 1;
+      setFailedAttempts(newAttempts);
+      localStorage.setItem('tpf_admin_failed_attempts', newAttempts.toString());
+
+      if (newAttempts >= MAX_ATTEMPTS) {
+        const lockoutUntil = Date.now() + LOCKOUT_SECONDS * 1000;
+        localStorage.setItem('tpf_admin_lockout_until', lockoutUntil.toString());
+        setLockoutTimeRemaining(LOCKOUT_SECONDS);
+        setAuthError(`Security Rate-Limit Triggered! Exceeded ${MAX_ATTEMPTS} failed attempts. Console locked.`);
+      } else {
+        setAuthError(`Invalid Password! Access Denied (${MAX_ATTEMPTS - newAttempts} attempt${MAX_ATTEMPTS - newAttempts === 1 ? '' : 's'} remaining).`);
+      }
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    sessionStorage.removeItem('tpf_admin_auth');
+    setPasswordInput('');
+    setAuthError(null);
+  };
 
   // --- Editing states ---
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -643,6 +726,117 @@ export default function AdminPanel({
     uf.director.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  if (!isAuthenticated) {
+    return (
+      <div className="w-full min-h-[70vh] flex flex-col items-center justify-center font-sans text-white px-4 py-12">
+        <div className="w-full max-w-md bg-[#0e0e12] border border-amber-500/30 rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl relative overflow-hidden">
+          {/* Decorative glowing ambient elements */}
+          <div className="absolute -top-24 -left-24 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-red-500/10 rounded-full blur-3xl pointer-events-none" />
+
+          {/* Header */}
+          <div className="flex flex-col items-center text-center mb-6">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500/20 to-red-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 mb-4 shadow-lg shadow-amber-500/10">
+              <Lock className="w-8 h-8 animate-pulse" />
+            </div>
+            <h2 className="text-2xl font-black uppercase tracking-wider font-display text-white">
+              Admin Portal Gateway
+            </h2>
+            <p className="text-xs font-mono text-amber-400/80 mt-1 uppercase tracking-widest">
+              TPF CINEMAS • RESTRICTED CONSOLE
+            </p>
+          </div>
+
+          {/* Lockout Banner */}
+          {lockoutTimeRemaining > 0 ? (
+            <div className="mb-6 p-4 rounded-xl bg-red-500/15 border border-red-500/40 text-red-300 font-mono text-xs flex flex-col items-center text-center gap-2 shadow-lg animate-pulse">
+              <div className="flex items-center gap-2 text-red-400 font-bold">
+                <ShieldAlert className="w-5 h-5" />
+                <span>SECURITY LOCKOUT ACTIVE</span>
+              </div>
+              <p>Maximum failed attempts reached ({MAX_ATTEMPTS}/{MAX_ATTEMPTS}).</p>
+              <div className="text-xl font-black text-amber-400 font-mono tracking-widest mt-1 bg-black/80 px-5 py-2 rounded-lg border border-red-500/40 shadow-inner">
+                00:{lockoutTimeRemaining < 10 ? `0${lockoutTimeRemaining}` : lockoutTimeRemaining} SECONDS
+              </div>
+            </div>
+          ) : authError ? (
+            <div className="mb-6 p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 font-mono text-xs flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+              <span>{authError}</span>
+            </div>
+          ) : null}
+
+          {/* Form */}
+          <form onSubmit={handleAuthenticate} className="space-y-4">
+            <div>
+              <label className="block text-[10px] font-mono font-bold text-white/50 uppercase tracking-widest mb-1.5">
+                Master Security Password
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-white/40">
+                  <Key className="w-4 h-4 text-amber-400/70" />
+                </div>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                  disabled={lockoutTimeRemaining > 0}
+                  placeholder="Enter admin password..."
+                  className="w-full bg-black/80 border border-white/15 rounded-xl pl-10 pr-10 py-3 text-sm font-mono text-white placeholder-white/20 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  disabled={lockoutTimeRemaining > 0}
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-white/40 hover:text-white transition-colors cursor-pointer"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4 text-amber-400" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Rate limiting attempt counter */}
+            <div className="flex items-center justify-between text-[11px] font-mono text-white/40 px-1">
+              <span>Security Threshold</span>
+              <span className={failedAttempts > 0 ? 'text-amber-400 font-bold' : ''}>
+                Failed Attempts: {failedAttempts} / {MAX_ATTEMPTS}
+              </span>
+            </div>
+
+            {/* Action buttons */}
+            <div className="pt-2 flex flex-col gap-2">
+              <button
+                type="submit"
+                disabled={lockoutTimeRemaining > 0 || !passwordInput.trim()}
+                className="w-full py-3 px-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-extrabold font-mono text-xs uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-amber-500/20 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
+              >
+                <ShieldCheck className="w-4 h-4" />
+                <span>Authenticate Access</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={onBack}
+                className="w-full py-2.5 px-4 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white font-mono text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 border border-white/10"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Return to Main Site</span>
+              </button>
+            </div>
+          </form>
+
+          {/* Footer badge */}
+          <div className="mt-6 pt-4 border-t border-white/10 text-center">
+            <p className="text-[10px] font-mono text-white/30">
+              PROTECTED BY RATE-LIMITED ENCRYPTION • TPF CINEMAS ARCHITECTURE
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full flex flex-col gap-6 font-sans text-white/90">
       
@@ -676,6 +870,15 @@ export default function AdminPanel({
           >
             <RefreshCw className="h-3 w-3" />
             Reset Defaults
+          </button>
+
+          <button
+            onClick={handleLogout}
+            className="px-3 py-1.5 bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 rounded text-xs font-mono tracking-wider transition-all cursor-pointer flex items-center gap-1.5"
+            title="Lock Console and Logout"
+          >
+            <Lock className="h-3 w-3" />
+            Lock Console
           </button>
           
           <button

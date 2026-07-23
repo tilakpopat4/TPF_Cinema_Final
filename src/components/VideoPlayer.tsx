@@ -3,7 +3,7 @@ import {
   Play, Pause, Volume2, VolumeX, Maximize, Minimize, 
   RotateCcw, Sliders, Camera, DollarSign, ExternalLink, 
   Heart, Flame, Gift, Star, Eye, ThumbsUp, AlertCircle,
-  Shield, ShieldOff, EyeOff, Subtitles, Settings, Check
+  Shield, ShieldOff, EyeOff, Subtitles, Settings, Check, Tv
 } from 'lucide-react';
 import { Film } from '../types';
 import { getVideoEmbedData } from '../lib/driveUtils';
@@ -172,13 +172,13 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar, initi
     setShowPauseSlide(false);
   }, [film, initialEpisodeIndex]);
 
-  // Netflix-style Pause Title Slide timer: shows full screen pause slide 1.5s after pausing
+  // Netflix-style Pause Title Slide timer: shows full screen pause slide 12 seconds after pausing
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (!isPlaying) {
       timer = setTimeout(() => {
         setShowPauseSlide(true);
-      }, 1500);
+      }, 12000);
     } else {
       setShowPauseSlide(false);
     }
@@ -386,7 +386,9 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar, initi
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className={`flex flex-col gap-6 transition-all duration-500 ${
+      theaterMode ? 'w-full lg:-mx-8 lg:w-[calc(100%+4rem)] xl:-mx-16 xl:w-[calc(100%+8rem)]' : ''
+    }`}>
       {/* Lights Off Cinematic Cover Overlay */}
       {isLightsOff && (
         <div 
@@ -481,12 +483,14 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar, initi
       <div 
         id="cinema-player-container"
         ref={containerRef}
-        className={`relative overflow-hidden rounded-lg bg-black border border-white/5 group shadow-2xl transition-all duration-500 ${
-          theaterMode ? 'w-full aspect-[21/9]' : 'w-full aspect-video'
+        className={`relative overflow-hidden rounded-xl bg-black border group shadow-2xl transition-all duration-500 ${
+          theaterMode 
+            ? 'w-full aspect-[21/9] lg:aspect-[2.35/1] border-amber-500/40 ring-1 ring-amber-500/20 shadow-amber-500/10' 
+            : 'w-full aspect-video border-white/10'
         } ${isLightsOff ? 'z-55 shadow-amber-500/5 ring-1 ring-amber-500/10' : ''}`}
       >
-        {/* Quality Indicator Badge Watermark */}
-        <div className="absolute top-4 left-4 z-25 pointer-events-none flex items-center gap-2 transition-all">
+        {/* Quality Indicator & Theater Badge Watermarks */}
+        <div className="absolute top-4 left-4 z-25 pointer-events-none flex flex-wrap items-center gap-2 transition-all">
           <span className={`text-[9px] sm:text-[10px] font-mono font-bold px-2.5 py-1 rounded-md border backdrop-blur-md shadow-lg transition-all ${
             videoQuality === '4K' 
               ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' 
@@ -500,6 +504,13 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar, initi
             {videoQuality === '360p' && '360p DATA SAVER'}
             {videoQuality === 'Auto' && 'AUTO ADAPTIVE STREAM'}
           </span>
+
+          {theaterMode && (
+            <span className="text-[9px] sm:text-[10px] font-mono font-bold px-2.5 py-1 rounded-md border border-amber-500/50 bg-amber-500/20 text-amber-300 backdrop-blur-md shadow-lg flex items-center gap-1.5 animate-pulse">
+              <Tv className="w-3 h-3 text-amber-400" />
+              <span>THEATER MODE (21:9 WIDESCREEN)</span>
+            </span>
+          )}
         </div>
 
         {/* Video HTML5 Tag or Dynamic Embed Player */}
@@ -835,10 +846,15 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar, initi
               <button
                 id="btn-theater-toggle"
                 onClick={() => setTheaterMode(!theaterMode)}
-                className="hidden md:block text-white/50 hover:text-amber-500 transition-colors cursor-pointer"
-                title="Toggle theater mode (wide)"
+                className={`flex items-center gap-1.5 text-[9px] font-mono font-bold px-2 py-0.5 rounded border active:scale-95 tracking-widest transition-all cursor-pointer ${
+                  theaterMode
+                    ? 'bg-amber-500 text-black border-amber-400 font-extrabold shadow-md shadow-amber-500/20'
+                    : 'bg-white/5 text-white/50 border-white/10 hover:text-white hover:border-white/20'
+                }`}
+                title="Toggle Theater Mode (Ultra-wide Widescreen)"
               >
-                <Sliders className={`h-4 w-4 ${theaterMode ? 'text-amber-400' : ''}`} />
+                <Tv className={`h-3 w-3 shrink-0 ${theaterMode ? 'text-black' : 'text-amber-400'}`} />
+                <span>THEATER</span>
               </button>
 
               {/* Fullscreen Toggle */}
