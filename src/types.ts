@@ -84,3 +84,9 @@ export interface Tip {
   createdAt: number;
 }
 
+export interface ContinueWatchingItem {
+  filmId: string;
+  episodeIndex?: number;
+  timestamp: number;
+}
+

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { initialFilms, mockFilmmakers } from './data/mockFilms';
-import { Film, Review, UpcomingFilm, Filmmaker, Tip } from './types';
+import { Film, Review, UpcomingFilm, Filmmaker, Tip, ContinueWatchingItem } from './types';
 import { getDirectImageUrl } from './lib/driveUtils';
 import Header from './components/Header';
 import VideoPlayer from './components/VideoPlayer';
@@ -17,6 +17,7 @@ import IntroSplash from './components/IntroSplash';
 import FilmmakerStudio from './components/FilmmakerStudio';
 import { onAuthStateChanged, signOut, User as FirebaseUser } from 'firebase/auth';
 import { auth, db, handleFirestoreError, OperationType } from './lib/firebase';
+import { hydrateMediaList } from './lib/mediaStorage';
 import { 
   collection, 
   doc, 
@@ -31,7 +32,7 @@ import {
   Sparkles, Heart, Info, Globe, Coins, Flame, Tv, 
   CheckCircle, Plus, Bookmark, BookmarkCheck, ListFilter, 
   Clapperboard, AlertCircle, ArrowLeft, Play, Star, User,
-  TrendingUp, ChevronRight, Camera
+  TrendingUp, ChevronRight, Camera, RotateCcw, X, Clock
 } from 'lucide-react';
 
 const defaultUpcomingList: UpcomingFilm[] = [
@@ -90,9 +91,10 @@ export default function App() {
   const [activeType, setActiveType] = useState<'all' | 'film' | 'series' | 'watchlist'>('all');
   const [selectedGenreFilter, setSelectedGenreFilter] = useState<string>('All');
 
-  // User-specific states (personal watchlist & liked films synced to Firestore)
+  // User-specific states (personal watchlist & liked films & continue watching synced to Firestore)
   const [likedFilms, setLikedFilms] = useState<string[]>([]);
   const [watchlist, setWatchlist] = useState<string[]>([]);
+  const [continueWatching, setContinueWatching] = useState<ContinueWatchingItem[]>([]);
 
   // Modals & UI Toggles
   const [showSubmission, setShowSubmission] = useState(false);
@@ -173,16 +175,55 @@ export default function App() {
     seedDatabase();
   }, [currentUser]);
 
+  // Load local cached media state on initial mount
+  useEffect(() => {
+    const loadCachedMedia = async () => {
+      try {
+        const cachedFilms = localStorage.getItem('indiescreen_films_v1');
+        if (cachedFilms) {
+          const parsed = JSON.parse(cachedFilms);
+          const hydrated = await hydrateMediaList(parsed);
+          setFilms(hydrated);
+        }
+        const cachedFms = localStorage.getItem('indiescreen_filmmakers_v1');
+        if (cachedFms) {
+          const parsed = JSON.parse(cachedFms);
+          const hydrated = await hydrateMediaList(parsed);
+          setFilmmakers(hydrated);
+        }
+        const cachedUpcoming = localStorage.getItem('indiescreen_upcoming_v1');
+        if (cachedUpcoming) {
+          const parsed = JSON.parse(cachedUpcoming);
+          const hydrated = await hydrateMediaList(parsed);
+          setUpcomingFilms(hydrated);
+        }
+        const cachedCW = localStorage.getItem('tpf_continue_watching_v1');
+        if (cachedCW) {
+          try {
+            setContinueWatching(JSON.parse(cachedCW));
+          } catch (e) {
+            console.error("Error parsing continue watching cache:", e);
+          }
+        }
+      } catch (err) {
+        console.error("Error loading cached local media:", err);
+      }
+    };
+    loadCachedMedia();
+  }, []);
+
   // Subscribe to Films real-time
   useEffect(() => {
     if (!currentUser) return;
-    const unsubscribe = onSnapshot(collection(db, 'films'), (snapshot) => {
+    const unsubscribe = onSnapshot(collection(db, 'films'), async (snapshot) => {
       const loadedFilms: Film[] = [];
       snapshot.forEach((doc) => {
         loadedFilms.push(doc.data() as Film);
       });
       loadedFilms.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-      setFilms(loadedFilms);
+      const hydratedFilms = await hydrateMediaList(loadedFilms);
+      setFilms(hydratedFilms);
+      localStorage.setItem('indiescreen_films_v1', JSON.stringify(hydratedFilms));
     }, (error) => {
       handleFirestoreError(error, OperationType.LIST, 'films');
     });
@@ -192,13 +233,15 @@ export default function App() {
   // Subscribe to Filmmakers real-time
   useEffect(() => {
     if (!currentUser) return;
-    const unsubscribe = onSnapshot(collection(db, 'filmmakers'), (snapshot) => {
+    const unsubscribe = onSnapshot(collection(db, 'filmmakers'), async (snapshot) => {
       const loadedFilmmakers: Filmmaker[] = [];
       snapshot.forEach((doc) => {
         loadedFilmmakers.push(doc.data() as Filmmaker);
       });
       loadedFilmmakers.sort((a, b) => a.id.localeCompare(b.id));
-      setFilmmakers(loadedFilmmakers);
+      const hydratedFms = await hydrateMediaList(loadedFilmmakers);
+      setFilmmakers(hydratedFms);
+      localStorage.setItem('indiescreen_filmmakers_v1', JSON.stringify(hydratedFms));
     }, (error) => {
       handleFirestoreError(error, OperationType.LIST, 'filmmakers');
     });
@@ -208,13 +251,15 @@ export default function App() {
   // Subscribe to Upcoming Films real-time
   useEffect(() => {
     if (!currentUser) return;
-    const unsubscribe = onSnapshot(collection(db, 'upcoming_films'), (snapshot) => {
+    const unsubscribe = onSnapshot(collection(db, 'upcoming_films'), async (snapshot) => {
       const loadedUpcoming: UpcomingFilm[] = [];
       snapshot.forEach((doc) => {
         loadedUpcoming.push(doc.data() as UpcomingFilm);
       });
       loadedUpcoming.sort((a, b) => a.id.localeCompare(b.id));
-      setUpcomingFilms(loadedUpcoming);
+      const hydratedUpcoming = await hydrateMediaList(loadedUpcoming);
+      setUpcomingFilms(hydratedUpcoming);
+      localStorage.setItem('indiescreen_upcoming_v1', JSON.stringify(hydratedUpcoming));
     }, (error) => {
       handleFirestoreError(error, OperationType.LIST, 'upcoming_films');
     });
@@ -293,6 +338,10 @@ export default function App() {
         const data = docSnap.data();
         setWatchlist(data.watchlist || []);
         setLikedFilms(data.likedFilms || []);
+        if (data.continueWatching && Array.isArray(data.continueWatching)) {
+          setContinueWatching(data.continueWatching);
+          localStorage.setItem('tpf_continue_watching_v1', JSON.stringify(data.continueWatching));
+        }
       } else {
         setDoc(userDocRef, { watchlist: [], likedFilms: [] }, { merge: true })
           .catch(err => handleFirestoreError(err, OperationType.WRITE, `users/${currentUser.uid}`));
@@ -328,6 +377,10 @@ export default function App() {
   // --- Admin Save helpers (Updates Firebase and triggers live snapshot propagation) ---
   const saveFilmsToStorage = async (updatedFilms: Film[]) => {
     try {
+      const hydrated = await hydrateMediaList(updatedFilms);
+      setFilms(hydrated);
+      localStorage.setItem('indiescreen_films_v1', JSON.stringify(hydrated));
+
       const currentFilmsInDb = [...films];
       const updatedIds = new Set(updatedFilms.map(f => f.id));
       
@@ -359,6 +412,10 @@ export default function App() {
 
   const saveFilmmakersToStorage = async (updatedFilmmakers: Filmmaker[]) => {
     try {
+      const hydrated = await hydrateMediaList(updatedFilmmakers);
+      setFilmmakers(hydrated);
+      localStorage.setItem('indiescreen_filmmakers_v1', JSON.stringify(hydrated));
+
       const currentFilmmakersInDb = [...filmmakers];
       const updatedIds = new Set(updatedFilmmakers.map(f => f.id));
 
@@ -388,6 +445,10 @@ export default function App() {
 
   const saveUpcomingToStorage = async (updatedUpcoming: UpcomingFilm[]) => {
     try {
+      const hydrated = await hydrateMediaList(updatedUpcoming);
+      setUpcomingFilms(hydrated);
+      localStorage.setItem('indiescreen_upcoming_v1', JSON.stringify(hydrated));
+
       const currentUpcomingInDb = [...upcomingFilms];
       const updatedIds = new Set(updatedUpcoming.map(u => u.id));
 
@@ -589,8 +650,42 @@ export default function App() {
     }
   };
 
+  const recordFilmView = (filmId: string, episodeIndex: number = 0) => {
+    setContinueWatching(prev => {
+      const newItem: ContinueWatchingItem = {
+        filmId,
+        episodeIndex,
+        timestamp: Date.now()
+      };
+      const filtered = prev.filter(item => item.filmId !== filmId);
+      const updated = [newItem, ...filtered].slice(0, 5);
+      localStorage.setItem('tpf_continue_watching_v1', JSON.stringify(updated));
+
+      if (currentUser) {
+        setDoc(doc(db, 'users', currentUser.uid), { continueWatching: updated }, { merge: true })
+          .catch(err => console.error("Error saving continue watching to Firestore:", err));
+      }
+      return updated;
+    });
+  };
+
+  const handleRemoveFromContinueWatching = (filmId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setContinueWatching(prev => {
+      const updated = prev.filter(item => item.filmId !== filmId);
+      localStorage.setItem('tpf_continue_watching_v1', JSON.stringify(updated));
+
+      if (currentUser) {
+        setDoc(doc(db, 'users', currentUser.uid), { continueWatching: updated }, { merge: true })
+          .catch(err => console.error("Error removing continue watching item from Firestore:", err));
+      }
+      return updated;
+    });
+  };
+
   const handleSelectFilm = async (film: Film, episodeIndex: number = 0) => {
     try {
+      recordFilmView(film.id, episodeIndex);
       setSelectedActiveFilm(film);
       setSelectedEpisodeIndex(episodeIndex);
       setViewState('player');
@@ -643,6 +738,18 @@ export default function App() {
   });
 
   const watchlistFilms = approvedFilms.filter(f => watchlist.includes(f.id));
+
+  const continueWatchingFilms = continueWatching
+    .map(cw => {
+      const filmObj = films.find(f => f.id === cw.filmId);
+      if (!filmObj) return null;
+      return {
+        film: filmObj,
+        episodeIndex: cw.episodeIndex || 0,
+        timestamp: cw.timestamp
+      };
+    })
+    .filter((item): item is { film: Film; episodeIndex: number; timestamp: number } => item !== null);
 
   // --- Curated Categories for OTT Page ---
   const featuredFilm = approvedFilms.find(f => f.isFeatured) || approvedFilms[0] || activeFilm;
@@ -942,6 +1049,112 @@ export default function App() {
               
               /* NO ACTIVE FILTERS: STANDARD PREMIUM OTT RECOMMENDATIONS ROWS */
               <div className="flex flex-col gap-8 sm:gap-10">
+
+                {/* 0. CONTINUE WATCHING SECTION (Last 5 viewed films) */}
+                {continueWatchingFilms.length > 0 && (
+                  <div className="flex flex-col gap-3.5 bg-white/[0.02] border border-amber-500/20 p-4 sm:p-5 rounded-xl backdrop-blur-sm relative overflow-hidden shadow-xl">
+                    {/* Ambient subtle glow background */}
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/[0.03] rounded-full blur-3xl pointer-events-none" />
+
+                    <div className="flex items-center justify-between border-b border-white/10 pb-3 z-10">
+                      <div className="flex items-center gap-2.5">
+                        <div className="h-7 w-7 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center">
+                          <RotateCcw className="h-3.5 w-3.5" />
+                        </div>
+                        <div>
+                          <h3 className="text-xs font-mono font-bold tracking-widest uppercase text-[#F5F5F7] flex items-center gap-2">
+                            CONTINUE WATCHING
+                          </h3>
+                          <p className="text-[9px] font-mono text-white/40 uppercase tracking-tight">
+                            RESUME YOUR RECENTLY VIEWED SCREENINGS ({continueWatchingFilms.length}/5)
+                          </p>
+                        </div>
+                      </div>
+
+                      <span className="text-[9px] font-mono font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-full uppercase tracking-wider hidden sm:inline-block">
+                        ★ QUICK RESUME
+                      </span>
+                    </div>
+
+                    {/* Row / Grid of Continue Watching Cards */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3.5 sm:gap-4 pt-1 z-10">
+                      {continueWatchingFilms.map(({ film, episodeIndex }) => {
+                        const activeEp = film.episodes && film.episodes[episodeIndex] ? film.episodes[episodeIndex] : null;
+                        const poster = film.landscapePosterUrl || film.posterUrl;
+
+                        return (
+                          <div
+                            key={film.id}
+                            onClick={() => handleSelectFilm(film, episodeIndex)}
+                            className="group cursor-pointer relative rounded-lg overflow-hidden bg-black/60 border border-white/10 hover:border-amber-500/60 transition-all duration-300 shadow-lg flex flex-col justify-between"
+                          >
+                            {/* Card Thumbnail Area */}
+                            <div className="relative aspect-[16/10] w-full overflow-hidden bg-zinc-900">
+                              <img
+                                src={getDirectImageUrl(poster)}
+                                alt={film.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-85 group-hover:opacity-100"
+                                style={{
+                                  objectPosition: `center ${
+                                    film.landscapePosterUrl
+                                      ? (film.landscapePosterPositionY ?? 50)
+                                      : (film.posterPositionY ?? 50)
+                                  }%`
+                                }}
+                                referrerPolicy="no-referrer"
+                              />
+
+                              {/* Dark Gradient Overlay */}
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+
+                              {/* Remove item button */}
+                              <button
+                                type="button"
+                                onClick={(e) => handleRemoveFromContinueWatching(film.id, e)}
+                                title="Remove from Continue Watching"
+                                className="absolute top-1.5 right-1.5 h-6 w-6 rounded-full bg-black/70 hover:bg-rose-500 text-white/70 hover:text-white flex items-center justify-center border border-white/10 transition-all opacity-0 group-hover:opacity-100 z-20"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+
+                              {/* Type / Episode Badge */}
+                              <div className="absolute top-1.5 left-1.5 z-10">
+                                <span className="text-[8px] font-mono font-bold bg-black/80 text-amber-400 border border-amber-500/30 px-1.5 py-0.5 rounded uppercase tracking-wider backdrop-blur-sm">
+                                  {film.type === 'series'
+                                    ? (activeEp ? `Ep ${episodeIndex + 1}` : 'Series')
+                                    : 'Film'}
+                                </span>
+                              </div>
+
+                              {/* Play Icon Circle Overlay */}
+                              <div className="absolute inset-0 flex items-center justify-center z-10">
+                                <div className="h-9 w-9 rounded-full bg-amber-500/90 text-black flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform">
+                                  <Play className="h-4 w-4 fill-current ml-0.5" />
+                                </div>
+                              </div>
+
+                              {/* Progress bar simulation at bottom of thumbnail */}
+                              <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
+                                <div className="h-full bg-amber-400 w-2/3 rounded-r" />
+                              </div>
+                            </div>
+
+                            {/* Title & Info Bar */}
+                            <div className="p-2.5 flex flex-col justify-between gap-1 bg-[#161618]">
+                              <p className="text-xs font-extrabold text-[#F5F5F7] truncate font-sans group-hover:text-amber-300 transition-colors">
+                                {film.title}
+                              </p>
+                              <div className="flex items-center justify-between text-[9px] font-mono text-white/50">
+                                <span className="truncate">By {film.director}</span>
+                                <span className="text-amber-400 font-bold shrink-0 ml-1">RESUME</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 {/* A. GIANT DYNAMIC HERO BANNER */}
                 {featuredFilm && (

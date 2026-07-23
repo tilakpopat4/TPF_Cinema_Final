@@ -3,6 +3,7 @@ import {
   Film, Filmmaker, UpcomingFilm 
 } from '../types';
 import { getDirectImageUrl } from '../lib/driveUtils';
+import { saveMediaFile } from '../lib/mediaStorage';
 import { 
   Film as FilmIcon, User, Film as UpcomingIcon, Plus, Edit, Trash2, 
   Check, X, Save, Search, Settings, ShieldAlert, ArrowLeft, RefreshCw,
@@ -132,39 +133,53 @@ export default function AdminPanel({
   // --- Web Series Episode Hub State ---
   const [selectedSeriesId, setSelectedSeriesId] = useState<string>('');
 
-  const processEpisodeVideoUpload = (file: File, episodeIndex: number) => {
-    const blobUrl = URL.createObjectURL(file);
-    const updated = [...(filmForm.episodes || [])];
-    if (updated[episodeIndex]) {
-      updated[episodeIndex] = {
-        ...updated[episodeIndex],
-        videoUrl: blobUrl,
-        title: updated[episodeIndex].title.includes('Episode') ? file.name.replace(/\.[^/.]+$/, '').replace(/_/g, ' ') : updated[episodeIndex].title
-      };
-      setFilmForm({ ...filmForm, episodes: updated });
+  const processEpisodeVideoUpload = async (file: File, episodeIndex: number) => {
+    try {
+      const res = await saveMediaFile(file);
+      const updated = [...(filmForm.episodes || [])];
+      if (updated[episodeIndex]) {
+        updated[episodeIndex] = {
+          ...updated[episodeIndex],
+          videoUrl: res.mediaKey,
+          title: updated[episodeIndex].title.includes('Episode') ? file.name.replace(/\.[^/.]+$/, '').replace(/_/g, ' ') : updated[episodeIndex].title
+        };
+        setFilmForm({ ...filmForm, episodes: updated });
+      }
+    } catch (err) {
+      console.error('Error processing episode video:', err);
     }
   };
 
-  const processEpisodeThumbnailUpload = (file: File, episodeIndex: number) => {
-    const blobUrl = URL.createObjectURL(file);
-    const updated = [...(filmForm.episodes || [])];
-    if (updated[episodeIndex]) {
-      updated[episodeIndex] = {
-        ...updated[episodeIndex],
-        thumbnailUrl: blobUrl
-      };
-      setFilmForm({ ...filmForm, episodes: updated });
+  const processEpisodeThumbnailUpload = async (file: File, episodeIndex: number) => {
+    try {
+      const res = await saveMediaFile(file);
+      const updated = [...(filmForm.episodes || [])];
+      if (updated[episodeIndex]) {
+        updated[episodeIndex] = {
+          ...updated[episodeIndex],
+          thumbnailUrl: res.mediaKey
+        };
+        setFilmForm({ ...filmForm, episodes: updated });
+      }
+    } catch (err) {
+      console.error('Error processing episode thumbnail:', err);
     }
   };
 
-  const processVideoFileSelect = (file: File) => {
+  const processVideoFileSelect = async (file: File) => {
     const fileExt = file.name.split('.').pop()?.toLowerCase() || 'mp4';
     const isMov = fileExt === 'mov' || file.type.includes('quicktime');
     const sizeMb = file.size / (1024 * 1024);
     const sizeFormatted = sizeMb > 1024 ? `${(sizeMb / 1024).toFixed(1)} GB` : `${sizeMb.toFixed(1)} MB`;
     
-    // Create local Object URL for instant browser playback
-    const blobUrl = URL.createObjectURL(file);
+    let videoUrlKey = '';
+    try {
+      const res = await saveMediaFile(file);
+      videoUrlKey = res.mediaKey;
+    } catch (err) {
+      videoUrlKey = URL.createObjectURL(file);
+    }
+
     const newId = 'mv-' + Date.now();
     
     const newMasterVideo: MasterVideoFile = {
@@ -172,7 +187,7 @@ export default function AdminPanel({
       fileName: file.name,
       fileSizeFormatted: sizeFormatted,
       fileType: isMov ? '.mov' : `.${fileExt}`,
-      videoUrl: blobUrl,
+      videoUrl: videoUrlKey,
       uploadProgress: 15,
       status: 'uploading',
       uploadSpeed: sizeMb > 1000 ? '145 MB/s' : '48 MB/s',
@@ -910,13 +925,34 @@ export default function AdminPanel({
                           </label>
                           <span className="text-[9px] font-mono text-white/40">Used in film cards & vertical lists</span>
                         </div>
-                        <input
-                          type="url"
-                          value={filmForm.posterUrl || ''}
-                          onChange={(e) => setFilmForm({ ...filmForm, posterUrl: e.target.value })}
-                          className="bg-black border border-white/10 p-2 rounded text-white text-xs focus:outline-none focus:border-amber-500/50 font-sans"
-                          placeholder="https://images.unsplash.com/... or Google Drive direct link"
-                        />
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={filmForm.posterUrl || ''}
+                            onChange={(e) => setFilmForm({ ...filmForm, posterUrl: e.target.value })}
+                            className="flex-1 bg-black border border-white/10 p-2 rounded text-white text-xs focus:outline-none focus:border-amber-500/50 font-sans"
+                            placeholder="https://... or click upload ->"
+                          />
+                          <label className="px-3 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer shrink-0 transition-colors">
+                            <Upload className="h-3.5 w-3.5" />
+                            <span>Upload Poster</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={async (e) => {
+                                if (e.target.files && e.target.files[0]) {
+                                  try {
+                                    const res = await saveMediaFile(e.target.files[0]);
+                                    setFilmForm(prev => ({ ...prev, posterUrl: res.mediaKey }));
+                                  } catch (err) {
+                                    console.error('Error saving local poster:', err);
+                                  }
+                                }
+                              }}
+                            />
+                          </label>
+                        </div>
                       </div>
 
                       {filmForm.posterUrl ? (
@@ -1029,13 +1065,34 @@ export default function AdminPanel({
                             </button>
                           )}
                         </div>
-                        <input
-                          type="url"
-                          value={filmForm.landscapePosterUrl || ''}
-                          onChange={(e) => setFilmForm({ ...filmForm, landscapePosterUrl: e.target.value })}
-                          className="bg-black border border-white/10 p-2 rounded text-white text-xs focus:outline-none focus:border-amber-500/50 font-sans"
-                          placeholder="https://images.unsplash.com/... (Used on Hero featured banners & cinema player)"
-                        />
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={filmForm.landscapePosterUrl || ''}
+                            onChange={(e) => setFilmForm({ ...filmForm, landscapePosterUrl: e.target.value })}
+                            className="flex-1 bg-black border border-white/10 p-2 rounded text-white text-xs focus:outline-none focus:border-amber-500/50 font-sans"
+                            placeholder="https://... or click upload ->"
+                          />
+                          <label className="px-3 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer shrink-0 transition-colors">
+                            <Upload className="h-3.5 w-3.5" />
+                            <span>Upload Landscape</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={async (e) => {
+                                if (e.target.files && e.target.files[0]) {
+                                  try {
+                                    const res = await saveMediaFile(e.target.files[0]);
+                                    setFilmForm(prev => ({ ...prev, landscapePosterUrl: res.mediaKey }));
+                                  } catch (err) {
+                                    console.error('Error saving local landscape poster:', err);
+                                  }
+                                }
+                              }}
+                            />
+                          </label>
+                        </div>
                       </div>
 
                       {(filmForm.landscapePosterUrl || filmForm.posterUrl) ? (
@@ -1141,16 +1198,21 @@ export default function AdminPanel({
                         type="file"
                         accept=".mp4,.mov,video/mp4,video/quicktime,video/*"
                         className="hidden"
-                        onChange={(e) => {
+                        onChange={async (e) => {
                           const file = e.target.files?.[0];
                           if (file) {
                             processVideoFileSelect(file);
-                            const blobUrl = URL.createObjectURL(file);
-                            setFilmForm(prev => ({ 
-                              ...prev, 
-                              videoUrl: blobUrl,
-                              title: prev.title || file.name.replace(/\.[^/.]+$/, '').replace(/_/g, ' ')
-                            }));
+                            try {
+                              const res = await saveMediaFile(file);
+                              setFilmForm(prev => ({ 
+                                ...prev, 
+                                videoUrl: res.mediaKey,
+                                title: prev.title || file.name.replace(/\.[^/.]+$/, '').replace(/_/g, ' ')
+                              }));
+                            } catch (err) {
+                              console.error('Error saving video:', err);
+                              setFilmForm(prev => ({ ...prev, videoUrl: URL.createObjectURL(file) }));
+                            }
                           }
                         }}
                       />
@@ -1616,16 +1678,21 @@ export default function AdminPanel({
                         type="file"
                         accept=".mp4,.mov,video/mp4,video/quicktime,video/*"
                         className="hidden"
-                        onChange={(e) => {
+                        onChange={async (e) => {
                           const file = e.target.files?.[0];
                           if (file) {
                             processVideoFileSelect(file);
-                            const blobUrl = URL.createObjectURL(file);
-                            setUpcomingForm(prev => ({ 
-                              ...prev, 
-                              videoUrl: blobUrl,
-                              title: prev.title || file.name.replace(/\.[^/.]+$/, '').replace(/_/g, ' ')
-                            }));
+                            try {
+                              const res = await saveMediaFile(file);
+                              setUpcomingForm(prev => ({ 
+                                ...prev, 
+                                videoUrl: res.mediaKey,
+                                title: prev.title || file.name.replace(/\.[^/.]+$/, '').replace(/_/g, ' ')
+                              }));
+                            } catch (err) {
+                              console.error('Error saving trailer:', err);
+                              setUpcomingForm(prev => ({ ...prev, videoUrl: URL.createObjectURL(file) }));
+                            }
                           }
                         }}
                       />
@@ -2628,19 +2695,28 @@ export default function AdminPanel({
               const currentSeries = films.find(f => f.id === selectedSeriesId);
               if (!currentSeries) return null;
 
-              const handleBatchEpisodeUpload = (files: FileList) => {
-                const newEpisodes = Array.from(files).map((file, idx) => {
-                  const epNum = (currentSeries.episodes?.length || 0) + idx + 1;
-                  const blobUrl = URL.createObjectURL(file);
-                  const titleFormatted = file.name.replace(/\.[^/.]+$/, '').replace(/_/g, ' ');
-                  return {
-                    id: `ep-${Date.now()}-${idx}-${epNum}`,
-                    title: titleFormatted || `Episode ${epNum}`,
-                    duration: '15m 00s',
-                    videoUrl: blobUrl,
-                    thumbnailUrl: currentSeries.posterUrl || ''
-                  };
-                });
+              const handleBatchEpisodeUpload = async (files: FileList) => {
+                const fileArray = Array.from(files);
+                const newEpisodes = await Promise.all(
+                  fileArray.map(async (file, idx) => {
+                    const epNum = (currentSeries.episodes?.length || 0) + idx + 1;
+                    let videoUrlKey = '';
+                    try {
+                      const res = await saveMediaFile(file);
+                      videoUrlKey = res.mediaKey;
+                    } catch (e) {
+                      videoUrlKey = URL.createObjectURL(file);
+                    }
+                    const titleFormatted = file.name.replace(/\.[^/.]+$/, '').replace(/_/g, ' ');
+                    return {
+                      id: `ep-${Date.now()}-${idx}-${epNum}`,
+                      title: titleFormatted || `Episode ${epNum}`,
+                      duration: '15m 00s',
+                      videoUrl: videoUrlKey,
+                      thumbnailUrl: currentSeries.posterUrl || ''
+                    };
+                  })
+                );
 
                 const updated = [...(currentSeries.episodes || []), ...newEpisodes];
                 const updatedFilms = films.map(f => f.id === selectedSeriesId ? { ...f, episodes: updated } : f);
@@ -2801,13 +2877,17 @@ export default function AdminPanel({
                                     type="file"
                                     accept="image/*"
                                     className="hidden"
-                                    onChange={(e) => {
+                                    onChange={async (e) => {
                                       if (e.target.files && e.target.files[0]) {
-                                        const blobUrl = URL.createObjectURL(e.target.files[0]);
-                                        const eps = [...(currentSeries.episodes || [])];
-                                        eps[idx] = { ...eps[idx], thumbnailUrl: blobUrl };
-                                        const updatedFilms = films.map(f => f.id === selectedSeriesId ? { ...f, episodes: eps } : f);
-                                        onUpdateFilms(updatedFilms);
+                                        try {
+                                          const res = await saveMediaFile(e.target.files[0]);
+                                          const eps = [...(currentSeries.episodes || [])];
+                                          eps[idx] = { ...eps[idx], thumbnailUrl: res.mediaKey };
+                                          const updatedFilms = films.map(f => f.id === selectedSeriesId ? { ...f, episodes: eps } : f);
+                                          onUpdateFilms(updatedFilms);
+                                        } catch (err) {
+                                          console.error('Error saving thumbnail:', err);
+                                        }
                                       }
                                     }}
                                   />
@@ -2875,11 +2955,13 @@ export default function AdminPanel({
                                       className="hidden"
                                       onChange={(e) => {
                                         if (e.target.files && e.target.files[0]) {
-                                          const blobUrl = URL.createObjectURL(e.target.files[0]);
-                                          const eps = [...(currentSeries.episodes || [])];
-                                          eps[idx] = { ...eps[idx], videoUrl: blobUrl };
-                                          const updatedFilms = films.map(f => f.id === selectedSeriesId ? { ...f, episodes: eps } : f);
-                                          onUpdateFilms(updatedFilms);
+                                          const file = e.target.files[0];
+                                          saveMediaFile(file).then(res => {
+                                            const eps = [...(currentSeries.episodes || [])];
+                                            eps[idx] = { ...eps[idx], videoUrl: res.mediaKey };
+                                            const updatedFilms = films.map(f => f.id === selectedSeriesId ? { ...f, episodes: eps } : f);
+                                            onUpdateFilms(updatedFilms);
+                                          }).catch(err => console.error(err));
                                         }
                                       }}
                                     />

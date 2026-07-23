@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Film, Tv, Video, Image, DollarSign, Camera, HelpCircle, Sparkles, Check, Mail, Copy, ExternalLink, FileText, Plus, Trash2 } from 'lucide-react';
+import { X, Film, Tv, Video, Image, DollarSign, Camera, HelpCircle, Sparkles, Check, Mail, Copy, ExternalLink, FileText, Plus, Trash2, Upload } from 'lucide-react';
 import { Film as FilmType } from '../types';
+import { saveMediaFile } from '../lib/mediaStorage';
 
 interface SubmissionModalProps {
   onClose: () => void;
@@ -604,15 +605,36 @@ Best Regards,
                   </label>
                   <span className="text-[8px] font-mono text-white/40">Vertical Cards</span>
                 </div>
-                <input
-                  id="submit-custom-poster-input"
-                  type="url"
-                  required
-                  placeholder="Paste direct portrait URL (Unsplash, Drive...)"
-                  value={customPosterUrl}
-                  onChange={(e) => setCustomPosterUrl(e.target.value)}
-                  className="w-full bg-black/40 text-[#F5F5F7] text-xs px-2.5 py-2 rounded border border-white/10 focus:border-amber-500/50 focus:outline-none transition-all font-sans"
-                />
+                <div className="flex gap-2">
+                  <input
+                    id="submit-custom-poster-input"
+                    type="text"
+                    required
+                    placeholder="Paste URL or click upload ->"
+                    value={customPosterUrl}
+                    onChange={(e) => setCustomPosterUrl(e.target.value)}
+                    className="flex-1 bg-black/40 text-[#F5F5F7] text-xs px-2.5 py-2 rounded border border-white/10 focus:border-amber-500/50 focus:outline-none transition-all font-sans"
+                  />
+                  <label className="px-3 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer shrink-0 transition-colors">
+                    <Upload className="h-3.5 w-3.5" />
+                    <span>Upload File</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          try {
+                            const res = await saveMediaFile(e.target.files[0]);
+                            setCustomPosterUrl(res.mediaKey);
+                          } catch (err) {
+                            console.error('Error saving local poster:', err);
+                          }
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
 
                 {customPosterUrl && (
                   <div className="flex flex-col gap-2 pt-1 border-t border-white/5">
@@ -654,14 +676,35 @@ Best Regards,
                     </button>
                   )}
                 </div>
-                <input
-                  id="submit-custom-landscape-poster-input"
-                  type="url"
-                  placeholder="Paste direct landscape URL (Optional)"
-                  value={customLandscapePosterUrl}
-                  onChange={(e) => setCustomLandscapePosterUrl(e.target.value)}
-                  className="w-full bg-black/40 text-[#F5F5F7] text-xs px-2.5 py-2 rounded border border-white/10 focus:border-amber-500/50 focus:outline-none transition-all font-sans"
-                />
+                <div className="flex gap-2">
+                  <input
+                    id="submit-custom-landscape-poster-input"
+                    type="text"
+                    placeholder="Paste URL (Optional) or click upload ->"
+                    value={customLandscapePosterUrl}
+                    onChange={(e) => setCustomLandscapePosterUrl(e.target.value)}
+                    className="flex-1 bg-black/40 text-[#F5F5F7] text-xs px-2.5 py-2 rounded border border-white/10 focus:border-amber-500/50 focus:outline-none transition-all font-sans"
+                  />
+                  <label className="px-3 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer shrink-0 transition-colors">
+                    <Upload className="h-3.5 w-3.5" />
+                    <span>Upload File</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          try {
+                            const res = await saveMediaFile(e.target.files[0]);
+                            setCustomLandscapePosterUrl(res.mediaKey);
+                          } catch (err) {
+                            console.error('Error saving local landscape poster:', err);
+                          }
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
 
                 {(customLandscapePosterUrl || customPosterUrl) && (
                   <div className="flex flex-col gap-2 pt-1 border-t border-white/5">
@@ -712,18 +755,23 @@ Best Regards,
                   <input
                     type="file"
                     accept=".mp4,.mov,video/mp4,video/quicktime,video/*"
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       if (e.target.files && e.target.files[0]) {
                         const file = e.target.files[0];
-                        const localUrl = URL.createObjectURL(file);
-                        setCustomVideoUrl(localUrl);
+                        try {
+                          const res = await saveMediaFile(file);
+                          setCustomVideoUrl(res.mediaKey);
+                        } catch (err) {
+                          console.error('Error saving video:', err);
+                          setCustomVideoUrl(URL.createObjectURL(file));
+                        }
                       }
                     }}
                     className="block w-full text-xs text-white/60 file:mr-4 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-mono file:font-bold file:bg-amber-500 file:text-black hover:file:bg-amber-400 cursor-pointer"
                   />
-                  {customVideoUrl && customVideoUrl.startsWith('blob:') && (
+                  {customVideoUrl && (customVideoUrl.startsWith('blob:') || customVideoUrl.startsWith('indexeddb:')) && (
                     <div className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded flex items-center justify-between">
-                      <span>✓ Direct .MP4/.MOV file selected and attached for streaming</span>
+                      <span>✓ Direct .MP4/.MOV master file saved locally for persistent streaming</span>
                       <button 
                         type="button" 
                         onClick={() => setCustomVideoUrl('')} 
