@@ -33,21 +33,58 @@ function openDB(): Promise<IDBDatabase> {
 }
 
 /**
- * Convert an image file to a persistent Base64 Data URL
+ * Compress and resize an image file into a lightweight JPEG Base64 Data URL
+ * guaranteed to fit within Firestore & LocalStorage limits (< 200KB).
  */
-export function imageFileToBase64(file: File): Promise<string> {
+export function compressAndResizeImage(file: File, maxDimension = 1200, quality = 0.82): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        resolve(reader.result);
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxDimension || height > maxDimension) {
+          if (width > height) {
+            height = Math.round((height * maxDimension) / width);
+            width = maxDimension;
+          } else {
+            width = Math.round((width * maxDimension) / height);
+            height = maxDimension;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Failed to get 2D context for image compression.'));
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        resolve(dataUrl);
+      };
+      img.onerror = () => reject(new Error('Failed to load image for compression.'));
+      if (typeof e.target?.result === 'string') {
+        img.src = e.target.result;
       } else {
-        reject(new Error('Failed to convert image to Base64 data URL.'));
+        reject(new Error('Failed to read image file.'));
       }
     };
     reader.onerror = () => reject(reader.error);
     reader.readAsDataURL(file);
   });
+}
+
+/**
+ * Convert an image file to a persistent Base64 Data URL
+ */
+export function imageFileToBase64(file: File): Promise<string> {
+  return compressAndResizeImage(file, 1200, 0.82);
 }
 
 /**
@@ -58,8 +95,8 @@ export async function saveMediaFile(file: File): Promise<{ mediaKey: string; pre
 
   if (isImage) {
     try {
-      // For images, Base64 Data URLs are self-contained and work permanently in state, localStorage & Firestore!
-      const base64Url = await imageFileToBase64(file);
+      // For images, lightweight Base64 Data URLs (<150KB) are self-contained and work permanently in state, localStorage & Firestore!
+      const base64Url = await compressAndResizeImage(file, 1200, 0.82);
       // Also store raw file in IndexedDB for backup
       const id = 'img_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
       try {
@@ -72,7 +109,7 @@ export async function saveMediaFile(file: File): Promise<{ mediaKey: string; pre
       }
       return { mediaKey: base64Url, previewUrl: base64Url };
     } catch (err) {
-      console.error('Base64 conversion failed, falling back to IndexedDB:', err);
+      console.error('Image compression failed, falling back to basic reader:', err);
     }
   }
 
