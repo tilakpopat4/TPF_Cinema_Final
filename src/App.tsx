@@ -18,6 +18,7 @@ import FilmmakerStudio from './components/FilmmakerStudio';
 import { onAuthStateChanged, signOut, User as FirebaseUser } from 'firebase/auth';
 import { auth, db, handleFirestoreError, OperationType } from './lib/firebase';
 import { hydrateMediaList, dehydrateMediaList, dehydrateMediaItem } from './lib/mediaStorage';
+import { getContentId, getThumbnailContentId } from './lib/certificateGenerator';
 import { 
   collection, 
   doc, 
@@ -282,11 +283,31 @@ export default function App() {
     return () => unsubscribe();
   }, [currentUser]);
 
-  // Handle URL change routing
+  // Handle URL change routing and direct Content ID lookup
   useEffect(() => {
     const handleUrlChange = () => {
       const path = window.location.pathname;
       const hash = window.location.hash;
+      const searchParams = new URLSearchParams(window.location.search);
+      const targetCid = searchParams.get('cid') || searchParams.get('contentId') || searchParams.get('id') ||
+                        (hash.includes('cid=') ? hash.split('cid=')[1] : (hash.startsWith('#TPF-') ? hash.replace('#', '') : ''));
+
+      if (targetCid && films.length > 0) {
+        const queryLower = targetCid.toLowerCase().trim();
+        const matchedFilm = films.find(f => 
+          f.id.toLowerCase() === queryLower ||
+          getContentId(f).toLowerCase() === queryLower ||
+          getThumbnailContentId(f).toLowerCase() === queryLower ||
+          (f.contentId && f.contentId.toLowerCase() === queryLower) ||
+          (f.thumbnailContentId && f.thumbnailContentId.toLowerCase() === queryLower)
+        );
+        if (matchedFilm) {
+          setSelectedActiveFilm(matchedFilm);
+          setViewState('player');
+          return;
+        }
+      }
+
       if (path === '/admin' || hash === '#/admin' || hash === '#admin') {
         if (currentUser?.email === 'tilakpopat2007@gmail.com') {
           setViewState('admin');
@@ -313,7 +334,7 @@ export default function App() {
       window.removeEventListener('popstate', handleUrlChange);
       window.removeEventListener('hashchange', handleUrlChange);
     };
-  }, [currentUser]);
+  }, [currentUser, films]);
 
   // --- Firebase Auth Subscription ---
   useEffect(() => {
@@ -724,9 +745,17 @@ export default function App() {
   const genresAvailable: string[] = ['All', ...(Array.from(new Set(approvedFilms.flatMap(f => f.genre))) as string[])];
 
   const filteredFilms = approvedFilms.filter(f => {
-    const matchesSearch = f.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          f.director.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          f.genre.some(g => g.toLowerCase().includes(searchQuery.toLowerCase()));
+    const q = searchQuery.toLowerCase().trim();
+    const contentIdStr = getContentId(f).toLowerCase();
+    const thumbIdStr = getThumbnailContentId(f).toLowerCase();
+    
+    const matchesSearch = !q ||
+                          f.title.toLowerCase().includes(q) || 
+                          f.director.toLowerCase().includes(q) ||
+                          f.genre.some(g => g.toLowerCase().includes(q)) ||
+                          contentIdStr.includes(q) ||
+                          thumbIdStr.includes(q) ||
+                          f.id.toLowerCase().includes(q);
     
     let matchesType = true;
     if (activeType === 'film' || activeType === 'series') {

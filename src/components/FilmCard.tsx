@@ -1,7 +1,8 @@
 import React from 'react';
-import { Film, Star, Play, Tv, DollarSign } from 'lucide-react';
+import { Film, Star, Play, Tv, DollarSign, Tag } from 'lucide-react';
 import { Film as FilmType } from '../types';
 import { getDirectImageUrl } from '../lib/driveUtils';
+import { getContentId } from '../lib/certificateGenerator';
 
 interface FilmCardProps {
   key?: React.Key;
@@ -123,7 +124,9 @@ export default function FilmCard({ film, onClick, onSelectEpisode, isActive }: F
         )}
 
         <div className="flex items-center justify-between text-[9px] font-mono text-white/30 mt-1 border-t border-white/5 pt-2">
-          <span>{film.releaseYear}</span>
+          <span className="text-[8px] font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 font-mono">
+            {getContentId(film)}
+          </span>
           <span className="text-[8px] bg-white/5 border border-white/10 px-1.5 py-0.5 rounded text-white/50 hover:text-[#F5F5F7] transition-colors">
             {film.reviews.length} review{film.reviews.length !== 1 ? 's' : ''}
           </span>

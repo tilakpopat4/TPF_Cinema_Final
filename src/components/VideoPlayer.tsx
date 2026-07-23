@@ -3,7 +3,7 @@ import {
   Play, Pause, Volume2, VolumeX, Maximize, Minimize, 
   RotateCcw, Sliders, Camera, DollarSign, ExternalLink, 
   Heart, Flame, Gift, Star, Eye, ThumbsUp, AlertCircle,
-  Shield, ShieldOff, EyeOff, Subtitles, Settings, Check, Tv
+  Shield, ShieldOff, EyeOff, Subtitles, Settings, Check, Tv, Copy
 } from 'lucide-react';
 import { Film } from '../types';
 import { getVideoEmbedData } from '../lib/driveUtils';
@@ -49,6 +49,7 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar, initi
   const [videoQuality, setVideoQuality] = useState<'Auto' | '4K' | '1080p' | '720p' | '360p'>('1080p');
   const [showQualityMenu, setShowQualityMenu] = useState(false);
   const [qualityToast, setQualityToast] = useState<string | null>(null);
+  const [copiedNotice, setCopiedNotice] = useState<string | null>(null);
 
   // Real CSS visual filter & resolution crispness transformation for video quality
   function getVideoQualityStyle(quality: 'Auto' | '4K' | '1080p' | '720p' | '360p'): React.CSSProperties {
@@ -1002,14 +1003,51 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar, initi
             {/* TPF Unique Content ID */}
             <div className="flex items-center justify-between gap-2 border-b border-white/5 pb-2">
               <span className="text-[10px] text-amber-400 font-mono font-bold uppercase tracking-wider">TPF Content ID:</span>
-              <span className="text-xs font-mono font-bold text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">{getContentId(film)}</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-mono font-bold text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">{getContentId(film)}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const cid = getContentId(film);
+                    const url = `${window.location.origin}/?cid=${cid}`;
+                    navigator.clipboard.writeText(url);
+                    setCopiedNotice('Content ID Link Copied!');
+                    setTimeout(() => setCopiedNotice(null), 3000);
+                  }}
+                  className="p-1 bg-white/5 hover:bg-amber-500/20 text-white/70 hover:text-amber-400 rounded transition-colors cursor-pointer"
+                  title="Copy Direct Share URL for Content ID"
+                >
+                  <Copy className="w-3 h-3" />
+                </button>
+              </div>
             </div>
 
             {/* TPF Unique Thumbnail ID */}
             <div className="flex items-center justify-between gap-2 border-b border-white/5 pb-2">
               <span className="text-[10px] text-white/50 font-mono uppercase tracking-wider">Thumbnail Asset ID:</span>
-              <span className="text-[11px] font-mono text-white/80 bg-white/5 px-2 py-0.5 rounded border border-white/10">{getThumbnailContentId(film)}</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-mono text-white/80 bg-white/5 px-2 py-0.5 rounded border border-white/10">{getThumbnailContentId(film)}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const thumbId = getThumbnailContentId(film);
+                    navigator.clipboard.writeText(thumbId);
+                    setCopiedNotice('Thumbnail ID Copied!');
+                    setTimeout(() => setCopiedNotice(null), 3000);
+                  }}
+                  className="p-1 bg-white/5 hover:bg-white/15 text-white/50 hover:text-white rounded transition-colors cursor-pointer"
+                  title="Copy Thumbnail Asset ID"
+                >
+                  <Copy className="w-3 h-3" />
+                </button>
+              </div>
             </div>
+
+            {copiedNotice && (
+              <div className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded text-center animate-fade-in font-bold">
+                ✓ {copiedNotice}
+              </div>
+            )}
 
             {/* Director */}
             <div className="flex items-start justify-between gap-2">
