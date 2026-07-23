@@ -1050,115 +1050,9 @@ export default function App() {
               /* NO ACTIVE FILTERS: STANDARD PREMIUM OTT RECOMMENDATIONS ROWS */
               <div className="flex flex-col gap-8 sm:gap-10">
 
-                {/* 0. CONTINUE WATCHING SECTION (Last 5 viewed films) */}
-                {continueWatchingFilms.length > 0 && (
-                  <div className="flex flex-col gap-3.5 bg-white/[0.02] border border-amber-500/20 p-4 sm:p-5 rounded-xl backdrop-blur-sm relative overflow-hidden shadow-xl">
-                    {/* Ambient subtle glow background */}
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/[0.03] rounded-full blur-3xl pointer-events-none" />
-
-                    <div className="flex items-center justify-between border-b border-white/10 pb-3 z-10">
-                      <div className="flex items-center gap-2.5">
-                        <div className="h-7 w-7 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center">
-                          <RotateCcw className="h-3.5 w-3.5" />
-                        </div>
-                        <div>
-                          <h3 className="text-xs font-mono font-bold tracking-widest uppercase text-[#F5F5F7] flex items-center gap-2">
-                            CONTINUE WATCHING
-                          </h3>
-                          <p className="text-[9px] font-mono text-white/40 uppercase tracking-tight">
-                            RESUME YOUR RECENTLY VIEWED SCREENINGS ({continueWatchingFilms.length}/5)
-                          </p>
-                        </div>
-                      </div>
-
-                      <span className="text-[9px] font-mono font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-full uppercase tracking-wider hidden sm:inline-block">
-                        ★ QUICK RESUME
-                      </span>
-                    </div>
-
-                    {/* Row / Grid of Continue Watching Cards */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3.5 sm:gap-4 pt-1 z-10">
-                      {continueWatchingFilms.map(({ film, episodeIndex }) => {
-                        const activeEp = film.episodes && film.episodes[episodeIndex] ? film.episodes[episodeIndex] : null;
-                        const poster = film.landscapePosterUrl || film.posterUrl;
-
-                        return (
-                          <div
-                            key={film.id}
-                            onClick={() => handleSelectFilm(film, episodeIndex)}
-                            className="group cursor-pointer relative rounded-lg overflow-hidden bg-black/60 border border-white/10 hover:border-amber-500/60 transition-all duration-300 shadow-lg flex flex-col justify-between"
-                          >
-                            {/* Card Thumbnail Area */}
-                            <div className="relative aspect-[16/10] w-full overflow-hidden bg-zinc-900">
-                              <img
-                                src={getDirectImageUrl(poster)}
-                                alt={film.title}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-85 group-hover:opacity-100"
-                                style={{
-                                  objectPosition: `center ${
-                                    film.landscapePosterUrl
-                                      ? (film.landscapePosterPositionY ?? 50)
-                                      : (film.posterPositionY ?? 50)
-                                  }%`
-                                }}
-                                referrerPolicy="no-referrer"
-                              />
-
-                              {/* Dark Gradient Overlay */}
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
-
-                              {/* Remove item button */}
-                              <button
-                                type="button"
-                                onClick={(e) => handleRemoveFromContinueWatching(film.id, e)}
-                                title="Remove from Continue Watching"
-                                className="absolute top-1.5 right-1.5 h-6 w-6 rounded-full bg-black/70 hover:bg-rose-500 text-white/70 hover:text-white flex items-center justify-center border border-white/10 transition-all opacity-0 group-hover:opacity-100 z-20"
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
-
-                              {/* Type / Episode Badge */}
-                              <div className="absolute top-1.5 left-1.5 z-10">
-                                <span className="text-[8px] font-mono font-bold bg-black/80 text-amber-400 border border-amber-500/30 px-1.5 py-0.5 rounded uppercase tracking-wider backdrop-blur-sm">
-                                  {film.type === 'series'
-                                    ? (activeEp ? `Ep ${episodeIndex + 1}` : 'Series')
-                                    : 'Film'}
-                                </span>
-                              </div>
-
-                              {/* Play Icon Circle Overlay */}
-                              <div className="absolute inset-0 flex items-center justify-center z-10">
-                                <div className="h-9 w-9 rounded-full bg-amber-500/90 text-black flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform">
-                                  <Play className="h-4 w-4 fill-current ml-0.5" />
-                                </div>
-                              </div>
-
-                              {/* Progress bar simulation at bottom of thumbnail */}
-                              <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
-                                <div className="h-full bg-amber-400 w-2/3 rounded-r" />
-                              </div>
-                            </div>
-
-                            {/* Title & Info Bar */}
-                            <div className="p-2.5 flex flex-col justify-between gap-1 bg-[#161618]">
-                              <p className="text-xs font-extrabold text-[#F5F5F7] truncate font-sans group-hover:text-amber-300 transition-colors">
-                                {film.title}
-                              </p>
-                              <div className="flex items-center justify-between text-[9px] font-mono text-white/50">
-                                <span className="truncate">By {film.director}</span>
-                                <span className="text-amber-400 font-bold shrink-0 ml-1">RESUME</span>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* A. GIANT DYNAMIC HERO BANNER */}
+                {/* A. GIANT DYNAMIC HERO BANNER - FIRST AT TOP */}
                 {featuredFilm && (
-                  <div className="relative overflow-hidden rounded-xl bg-black border border-white/10 min-h-[420px] sm:min-h-[460px] md:min-h-0 md:aspect-[21/9] flex items-end shadow-2xl p-4 sm:p-6 md:p-10">
+                  <div className="relative overflow-hidden rounded-xl bg-black border border-white/10 min-h-[440px] sm:min-h-[480px] md:min-h-0 md:aspect-[21/9] flex items-center shadow-2xl p-5 sm:p-8 md:p-12">
                     {/* Background Graphic Art */}
                     <div className="absolute inset-0 z-0">
                       <img 
@@ -1174,21 +1068,22 @@ export default function App() {
                         }}
                         referrerPolicy="no-referrer"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#161618] via-[#161618]/85 to-black/20 md:bg-gradient-to-r md:from-[#161618] md:via-[#161618]/80 md:to-transparent z-10" />
+                      {/* Dark gradient mask tuned for 60% opacity fade behind the title */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#161618]/90 via-[#161618]/60 to-black/20 md:bg-gradient-to-r md:from-[#161618]/85 md:via-[#161618]/60 md:via-[50%] md:to-transparent z-10" />
                     </div>
 
-                    {/* Content Section */}
-                    <div className="relative z-20 w-full max-w-2xl flex flex-col gap-2.5 sm:gap-3.5 select-none">
+                    {/* Content Section - takes 50% width on medium+ screens */}
+                    <div className="relative z-20 w-full md:w-[50%] lg:w-[52%] flex flex-col gap-2.5 sm:gap-3 select-none pr-0 md:pr-4">
                       <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                        <span className="text-[8px] sm:text-[9px] font-mono font-bold uppercase tracking-widest bg-amber-500 text-black px-2 py-0.5 rounded">
+                        <span className="text-[8px] sm:text-[9px] font-mono font-bold uppercase tracking-widest bg-amber-500 text-black px-2 py-0.5 rounded shadow">
                           CINEMATIC FEATURED
                         </span>
-                        <span className="text-[8px] sm:text-[9px] font-mono font-bold uppercase tracking-widest bg-white/10 text-amber-500 px-2 py-0.5 rounded border border-amber-500/20 backdrop-blur-sm">
+                        <span className="text-[8px] sm:text-[9px] font-mono font-bold uppercase tracking-widest bg-white/10 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20 backdrop-blur-sm">
                           ★ RECOMMENDED SCREENING
                         </span>
                       </div>
 
-                      <h2 className="text-2xl sm:text-3xl md:text-5xl font-extrabold tracking-tight text-[#F5F5F7] uppercase font-display leading-tight drop-shadow-md">
+                      <h2 className="text-4xl sm:text-6xl md:text-7xl lg:text-7xl xl:text-8xl font-black tracking-tight text-[#F5F5F7] uppercase font-display leading-[0.95] drop-shadow-2xl my-1">
                         {featuredFilm.title}
                       </h2>
 
@@ -1202,7 +1097,7 @@ export default function App() {
                       </div>
 
                       <div className="max-w-lg">
-                        <p className={`text-xs md:text-sm text-white/80 font-sans leading-relaxed transition-all ${
+                        <p className={`text-xs md:text-sm text-white/80 font-sans leading-relaxed transition-all drop-shadow-sm ${
                           showFullFeaturedDesc ? '' : 'line-clamp-2 md:line-clamp-3'
                         }`}>
                           {featuredFilm.description}
@@ -1289,6 +1184,112 @@ export default function App() {
                           </div>
                         </div>
                       )}
+                    </div>
+                  </div>
+                )}
+
+                {/* 0. CONTINUE WATCHING SECTION (Last 5 viewed films) */}
+                {continueWatchingFilms.length > 0 && (
+                  <div className="flex flex-col gap-3.5 bg-white/[0.02] border border-amber-500/20 p-4 sm:p-5 rounded-xl backdrop-blur-sm relative overflow-hidden shadow-xl">
+                    {/* Ambient subtle glow background */}
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/[0.03] rounded-full blur-3xl pointer-events-none" />
+
+                    <div className="flex items-center justify-between border-b border-white/10 pb-3 z-10">
+                      <div className="flex items-center gap-2.5">
+                        <div className="h-7 w-7 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center">
+                          <RotateCcw className="h-3.5 w-3.5" />
+                        </div>
+                        <div>
+                          <h3 className="text-xs font-mono font-bold tracking-widest uppercase text-[#F5F5F7] flex items-center gap-2">
+                            CONTINUE WATCHING
+                          </h3>
+                          <p className="text-[9px] font-mono text-white/40 uppercase tracking-tight">
+                            RESUME YOUR RECENTLY VIEWED SCREENINGS ({continueWatchingFilms.length}/5)
+                          </p>
+                        </div>
+                      </div>
+
+                      <span className="text-[9px] font-mono text-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-full uppercase tracking-wider hidden sm:inline-block">
+                        ★ QUICK RESUME
+                      </span>
+                    </div>
+
+                    {/* Row / Grid of Continue Watching Cards */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3.5 sm:gap-4 pt-1 z-10">
+                      {continueWatchingFilms.map(({ film, episodeIndex }) => {
+                        const activeEp = film.episodes && film.episodes[episodeIndex] ? film.episodes[episodeIndex] : null;
+                        const poster = film.landscapePosterUrl || film.posterUrl;
+
+                        return (
+                          <div
+                            key={film.id}
+                            onClick={() => handleSelectFilm(film, episodeIndex)}
+                            className="group cursor-pointer relative rounded-lg overflow-hidden bg-black/60 border border-white/10 hover:border-amber-500/60 transition-all duration-300 shadow-lg flex flex-col justify-between"
+                          >
+                            {/* Card Thumbnail Area */}
+                            <div className="relative aspect-[16/10] w-full overflow-hidden bg-zinc-900">
+                              <img
+                                src={getDirectImageUrl(poster)}
+                                alt={film.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-85 group-hover:opacity-100"
+                                style={{
+                                  objectPosition: `center ${
+                                    film.landscapePosterUrl
+                                      ? (film.landscapePosterPositionY ?? 50)
+                                      : (film.posterPositionY ?? 50)
+                                  }%`
+                                }}
+                                referrerPolicy="no-referrer"
+                              />
+
+                              {/* Dark Gradient Overlay */}
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+
+                              {/* Remove item button */}
+                              <button
+                                type="button"
+                                onClick={(e) => handleRemoveFromContinueWatching(film.id, e)}
+                                title="Remove from Continue Watching"
+                                className="absolute top-1.5 right-1.5 h-6 w-6 rounded-full bg-black/70 hover:bg-rose-500 text-white/70 hover:text-white flex items-center justify-center border border-white/10 transition-all opacity-0 group-hover:opacity-100 z-20"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+
+                              {/* Type / Episode Badge */}
+                              <div className="absolute top-1.5 left-1.5 z-10">
+                                <span className="text-[8px] font-mono font-bold bg-black/80 text-amber-400 border border-amber-500/30 px-1.5 py-0.5 rounded uppercase tracking-wider backdrop-blur-sm">
+                                  {film.type === 'series'
+                                    ? (activeEp ? `Ep ${episodeIndex + 1}` : 'Series')
+                                    : 'Film'}
+                                </span>
+                              </div>
+
+                              {/* Play Icon Circle Overlay */}
+                              <div className="absolute inset-0 flex items-center justify-center z-10">
+                                <div className="h-9 w-9 rounded-full bg-amber-500/90 text-black flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform">
+                                  <Play className="h-4 w-4 fill-current ml-0.5" />
+                                </div>
+                              </div>
+
+                              {/* Progress bar simulation at bottom of thumbnail */}
+                              <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
+                                <div className="h-full bg-amber-400 w-2/3 rounded-r" />
+                              </div>
+                            </div>
+
+                            {/* Title & Info Bar */}
+                            <div className="p-2.5 flex flex-col justify-between gap-1 bg-[#161618]">
+                              <p className="text-xs font-extrabold text-[#F5F5F7] truncate font-sans group-hover:text-amber-300 transition-colors">
+                                {film.title}
+                              </p>
+                              <div className="flex items-center justify-between text-[9px] font-mono text-white/50">
+                                <span className="truncate">By {film.director}</span>
+                                <span className="text-amber-400 font-bold shrink-0 ml-1">RESUME</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
