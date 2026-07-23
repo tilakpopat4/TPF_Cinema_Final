@@ -177,6 +177,7 @@ export default function AdminPanel({
       const res = await saveMediaFile(file);
       videoUrlKey = res.mediaKey;
     } catch (err) {
+      console.error('Error saving master video:', err);
       videoUrlKey = URL.createObjectURL(file);
     }
 

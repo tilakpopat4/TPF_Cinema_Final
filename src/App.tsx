@@ -17,7 +17,7 @@ import IntroSplash from './components/IntroSplash';
 import FilmmakerStudio from './components/FilmmakerStudio';
 import { onAuthStateChanged, signOut, User as FirebaseUser } from 'firebase/auth';
 import { auth, db, handleFirestoreError, OperationType } from './lib/firebase';
-import { hydrateMediaList } from './lib/mediaStorage';
+import { hydrateMediaList, dehydrateMediaList, dehydrateMediaItem } from './lib/mediaStorage';
 import { 
   collection, 
   doc, 
@@ -223,7 +223,7 @@ export default function App() {
       loadedFilms.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
       const hydratedFilms = await hydrateMediaList(loadedFilms);
       setFilms(hydratedFilms);
-      localStorage.setItem('indiescreen_films_v1', JSON.stringify(hydratedFilms));
+      localStorage.setItem('indiescreen_films_v1', JSON.stringify(dehydrateMediaList(loadedFilms)));
     }, (error) => {
       handleFirestoreError(error, OperationType.LIST, 'films');
     });
@@ -241,7 +241,7 @@ export default function App() {
       loadedFilmmakers.sort((a, b) => a.id.localeCompare(b.id));
       const hydratedFms = await hydrateMediaList(loadedFilmmakers);
       setFilmmakers(hydratedFms);
-      localStorage.setItem('indiescreen_filmmakers_v1', JSON.stringify(hydratedFms));
+      localStorage.setItem('indiescreen_filmmakers_v1', JSON.stringify(dehydrateMediaList(loadedFilmmakers)));
     }, (error) => {
       handleFirestoreError(error, OperationType.LIST, 'filmmakers');
     });
@@ -259,7 +259,7 @@ export default function App() {
       loadedUpcoming.sort((a, b) => a.id.localeCompare(b.id));
       const hydratedUpcoming = await hydrateMediaList(loadedUpcoming);
       setUpcomingFilms(hydratedUpcoming);
-      localStorage.setItem('indiescreen_upcoming_v1', JSON.stringify(hydratedUpcoming));
+      localStorage.setItem('indiescreen_upcoming_v1', JSON.stringify(dehydrateMediaList(loadedUpcoming)));
     }, (error) => {
       handleFirestoreError(error, OperationType.LIST, 'upcoming_films');
     });
@@ -379,7 +379,7 @@ export default function App() {
     try {
       const hydrated = await hydrateMediaList(updatedFilms);
       setFilms(hydrated);
-      localStorage.setItem('indiescreen_films_v1', JSON.stringify(hydrated));
+      localStorage.setItem('indiescreen_films_v1', JSON.stringify(dehydrateMediaList(updatedFilms)));
 
       const currentFilmsInDb = [...films];
       const updatedIds = new Set(updatedFilms.map(f => f.id));
@@ -399,8 +399,9 @@ export default function App() {
       for (const film of updatedFilms) {
         const existing = currentFilmsInDb.find(f => f.id === film.id);
         const createdAt = existing?.createdAt || film.createdAt || Date.now();
+        const dehydrated = dehydrateMediaItem(film);
         try {
-          await setDoc(doc(db, 'films', film.id), { ...film, createdAt });
+          await setDoc(doc(db, 'films', film.id), { ...dehydrated, createdAt });
         } catch (err) {
           handleFirestoreError(err, OperationType.WRITE, `films/${film.id}`);
         }
@@ -414,7 +415,7 @@ export default function App() {
     try {
       const hydrated = await hydrateMediaList(updatedFilmmakers);
       setFilmmakers(hydrated);
-      localStorage.setItem('indiescreen_filmmakers_v1', JSON.stringify(hydrated));
+      localStorage.setItem('indiescreen_filmmakers_v1', JSON.stringify(dehydrateMediaList(updatedFilmmakers)));
 
       const currentFilmmakersInDb = [...filmmakers];
       const updatedIds = new Set(updatedFilmmakers.map(f => f.id));
@@ -432,8 +433,9 @@ export default function App() {
 
       // Add or update filmmakers
       for (const fm of updatedFilmmakers) {
+        const dehydrated = dehydrateMediaItem(fm);
         try {
-          await setDoc(doc(db, 'filmmakers', fm.id), fm);
+          await setDoc(doc(db, 'filmmakers', fm.id), dehydrated);
         } catch (err) {
           handleFirestoreError(err, OperationType.WRITE, `filmmakers/${fm.id}`);
         }
@@ -447,7 +449,7 @@ export default function App() {
     try {
       const hydrated = await hydrateMediaList(updatedUpcoming);
       setUpcomingFilms(hydrated);
-      localStorage.setItem('indiescreen_upcoming_v1', JSON.stringify(hydrated));
+      localStorage.setItem('indiescreen_upcoming_v1', JSON.stringify(dehydrateMediaList(updatedUpcoming)));
 
       const currentUpcomingInDb = [...upcomingFilms];
       const updatedIds = new Set(updatedUpcoming.map(u => u.id));
@@ -465,8 +467,9 @@ export default function App() {
 
       // Add or update upcoming trailers
       for (const up of updatedUpcoming) {
+        const dehydrated = dehydrateMediaItem(up);
         try {
-          await setDoc(doc(db, 'upcoming_films', up.id), up);
+          await setDoc(doc(db, 'upcoming_films', up.id), dehydrated);
         } catch (err) {
           handleFirestoreError(err, OperationType.WRITE, `upcoming_films/${up.id}`);
         }

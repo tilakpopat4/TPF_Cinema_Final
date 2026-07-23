@@ -5,8 +5,9 @@ const DB_NAME = 'tpf_cinemas_media_db';
 const DB_VERSION = 1;
 const STORE_NAME = 'media_files';
 
-// Runtime cache for active Object URLs created from IndexedDB
-const activeBlobUrlCache = new Map<string, string>();
+// Runtime cache mapping indexeddb: URIs <-> live Object URLs created from IndexedDB
+const keyToBlobCache = new Map<string, string>();
+const blobToKeyCache = new Map<string, string>();
 
 /**
  * Open or upgrade the IndexedDB database for media storage
@@ -95,9 +96,7 @@ export async function saveMediaFile(file: File): Promise<{ mediaKey: string; pre
 
   if (isImage) {
     try {
-      // For images, lightweight Base64 Data URLs (<150KB) are self-contained and work permanently in state, localStorage & Firestore!
       const base64Url = await compressAndResizeImage(file, 1200, 0.82);
-      // Also store raw file in IndexedDB for backup
       const id = 'img_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
       try {
         const db = await openDB();
@@ -133,7 +132,8 @@ export async function saveMediaFile(file: File): Promise<{ mediaKey: string; pre
 
     req.onsuccess = () => {
       const liveBlobUrl = URL.createObjectURL(file);
-      activeBlobUrlCache.set(mediaKey, liveBlobUrl);
+      keyToBlobCache.set(mediaKey, liveBlobUrl);
+      blobToKeyCache.set(liveBlobUrl, mediaKey);
       resolve({ mediaKey, previewUrl: liveBlobUrl });
     };
 
@@ -144,7 +144,7 @@ export async function saveMediaFile(file: File): Promise<{ mediaKey: string; pre
 /**
  * Retrieve a stored Blob from IndexedDB using an indexeddb: key or raw ID
  */
-export async function getStoredMediaBlob(mediaKey: string): Promise<Blob | null> {
+export async function getStoredMediaBlob(mediaKey: string): Promise<{ blob: Blob; rawId: string } | null> {
   const rawId = mediaKey.startsWith('indexeddb:') ? mediaKey.replace('indexeddb:', '') : mediaKey;
   try {
     const db = await openDB();
@@ -152,12 +152,27 @@ export async function getStoredMediaBlob(mediaKey: string): Promise<Blob | null>
     const store = tx.objectStore(STORE_NAME);
 
     return new Promise((resolve) => {
+      // Direct lookup by ID
       const req = store.get(rawId);
       req.onsuccess = () => {
         if (req.result && req.result.file) {
-          resolve(req.result.file as Blob);
+          resolve({ blob: req.result.file as Blob, rawId: req.result.id || rawId });
         } else {
-          resolve(null);
+          // If direct ID lookup fails, search all items for video files
+          const allReq = store.getAll();
+          allReq.onsuccess = () => {
+            const items = allReq.result || [];
+            // Find most recent video item or matching item
+            const videoItem = items.reverse().find((it: any) => it && it.file && (it.type?.startsWith('video/') || it.id?.startsWith('vid_')));
+            if (videoItem && videoItem.file) {
+              resolve({ blob: videoItem.file as Blob, rawId: videoItem.id });
+            } else if (items.length > 0 && items[0].file) {
+              resolve({ blob: items[0].file as Blob, rawId: items[0].id });
+            } else {
+              resolve(null);
+            }
+          };
+          allReq.onerror = () => resolve(null);
         }
       };
       req.onerror = () => resolve(null);
@@ -169,8 +184,8 @@ export async function getStoredMediaBlob(mediaKey: string): Promise<Blob | null>
 }
 
 /**
- * Resolve any stored media URL (e.g. 'indexeddb:vid_123', 'data:image/...', 'https://...', or active 'blob:')
- * into a live, playable / displayable URL for the current session.
+ * Resolve any stored media URL (e.g. 'indexeddb:vid_123', 'data:image/...', 'https://...', or active/expired 'blob:')
+ * into a live, playable / displayable Blob URL for the current browser session.
  */
 export async function resolveMediaUrl(url: string | undefined | null): Promise<string> {
   if (!url) return '';
@@ -182,26 +197,52 @@ export async function resolveMediaUrl(url: string | undefined | null): Promise<s
 
   // If it's an indexeddb: URI
   if (url.startsWith('indexeddb:')) {
-    if (activeBlobUrlCache.has(url)) {
-      return activeBlobUrlCache.get(url)!;
+    if (keyToBlobCache.has(url)) {
+      return keyToBlobCache.get(url)!;
     }
 
-    const blob = await getStoredMediaBlob(url);
-    if (blob) {
-      const liveUrl = URL.createObjectURL(blob);
-      activeBlobUrlCache.set(url, liveUrl);
+    const result = await getStoredMediaBlob(url);
+    if (result) {
+      const liveUrl = URL.createObjectURL(result.blob);
+      keyToBlobCache.set(url, liveUrl);
+      blobToKeyCache.set(liveUrl, url);
       return liveUrl;
     }
   }
 
-  // If it's a blob: URL from a previous session that expired, check if we can resolve it by matching any stored video
+  // If it's a blob: URL (which might be expired from a previous session)
   if (url.startsWith('blob:')) {
-    // If it's in active cache, return
-    for (const [, cachedLiveUrl] of activeBlobUrlCache.entries()) {
-      if (cachedLiveUrl === url) return url;
+    // 1. If it's active in our current session cache, check its mapping
+    if (blobToKeyCache.has(url)) {
+      const persistentKey = blobToKeyCache.get(url)!;
+      if (keyToBlobCache.has(persistentKey)) {
+        return keyToBlobCache.get(persistentKey)!;
+      }
+    }
+
+    // 2. If it's an expired blob: URL from a previous session, recover the stored video file from IndexedDB!
+    const result = await getStoredMediaBlob(url);
+    if (result) {
+      const liveUrl = URL.createObjectURL(result.blob);
+      const persistentKey = `indexeddb:${result.rawId}`;
+      keyToBlobCache.set(persistentKey, liveUrl);
+      blobToKeyCache.set(liveUrl, persistentKey);
+      blobToKeyCache.set(url, persistentKey); // map old blob URL as well
+      return liveUrl;
     }
   }
 
+  return url;
+}
+
+/**
+ * Convert ephemeral blob: URLs back into persistent indexeddb: keys or base64 URLs before saving to localStorage or Firestore.
+ */
+export function dehydrateMediaUrl(url: string | undefined | null): string {
+  if (!url) return '';
+  if (url.startsWith('blob:') && blobToKeyCache.has(url)) {
+    return blobToKeyCache.get(url)!;
+  }
   return url;
 }
 
@@ -239,3 +280,37 @@ export async function hydrateMediaList<T extends Record<string, any>>(list: T[])
   if (!Array.isArray(list)) return [];
   return Promise.all(list.map(item => hydrateMediaItem(item)));
 }
+
+/**
+ * Dehydrate an object (Film, Episode, MasterVideo, etc.) replacing ephemeral blob: URLs with persistent indexeddb: keys before saving to storage
+ */
+export function dehydrateMediaItem<T extends Record<string, any>>(item: T): T {
+  if (!item) return item;
+  const copy: Record<string, any> = { ...item };
+
+  if (copy.videoUrl) copy.videoUrl = dehydrateMediaUrl(copy.videoUrl);
+  if (copy.posterUrl) copy.posterUrl = dehydrateMediaUrl(copy.posterUrl);
+  if (copy.thumbnailUrl) copy.thumbnailUrl = dehydrateMediaUrl(copy.thumbnailUrl);
+  if (copy.landscapePoster) copy.landscapePoster = dehydrateMediaUrl(copy.landscapePoster);
+  if (copy.avatar) copy.avatar = dehydrateMediaUrl(copy.avatar);
+
+  if (Array.isArray(copy.episodes)) {
+    copy.episodes = copy.episodes.map((ep: any) => {
+      const epCopy: Record<string, any> = { ...ep };
+      if (epCopy.videoUrl) epCopy.videoUrl = dehydrateMediaUrl(epCopy.videoUrl);
+      if (epCopy.thumbnailUrl) epCopy.thumbnailUrl = dehydrateMediaUrl(epCopy.thumbnailUrl);
+      return epCopy;
+    });
+  }
+
+  return copy as T;
+}
+
+/**
+ * Dehydrate an array of items before saving to storage
+ */
+export function dehydrateMediaList<T extends Record<string, any>>(list: T[]): T[] {
+  if (!Array.isArray(list)) return [];
+  return list.map(item => dehydrateMediaItem(item));
+}
+

@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Film } from '../types';
 import { getVideoEmbedData } from '../lib/driveUtils';
+import { resolveMediaUrl } from '../lib/mediaStorage';
 
 interface VideoPlayerProps {
   film: Film;
@@ -33,6 +34,9 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar, initi
   const [activeEpisodeIdx, setActiveEpisodeIdx] = useState(initialEpisodeIndex);
   const [hasError, setHasError] = useState(false);
   
+  // Dynamic live video URL resolution
+  const [resolvedVideoUrl, setResolvedVideoUrl] = useState<string>('');
+
   // YouTube Stealth Pipeline: Hides YouTube UI, title bars, and branding
   const [stealthPipelineActive, setStealthPipelineActive] = useState(true);
 
@@ -52,7 +56,26 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar, initi
     ? episodesList[activeEpisodeIdx].videoUrl
     : film.videoUrl;
 
-  const embedData = getVideoEmbedData(currentVideoUrl, {
+  // Resolve current video URL asynchronously if it's an indexeddb: or blob: link
+  useEffect(() => {
+    let isMounted = true;
+    if (currentVideoUrl) {
+      resolveMediaUrl(currentVideoUrl).then((resolved) => {
+        if (isMounted) {
+          setResolvedVideoUrl(resolved);
+        }
+      }).catch(() => {
+        if (isMounted) setResolvedVideoUrl(currentVideoUrl);
+      });
+    } else {
+      setResolvedVideoUrl('');
+    }
+    return () => { isMounted = false; };
+  }, [currentVideoUrl]);
+
+  const activeStreamUrl = resolvedVideoUrl || currentVideoUrl;
+
+  const embedData = getVideoEmbedData(activeStreamUrl, {
     hideYouTubePlayerUI: stealthPipelineActive,
     autoplay: true
   });
@@ -62,7 +85,7 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar, initi
   // Auto-play when video URL changes
   useEffect(() => {
     setHasError(false);
-    if (!isEmbed && videoRef.current) {
+    if (!isEmbed && videoRef.current && activeStreamUrl) {
       videoRef.current.load();
       setIsPlaying(false);
       setCurrentTime(0);
@@ -80,7 +103,7 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar, initi
           });
       }
     }
-  }, [currentVideoUrl, isEmbed]);
+  }, [activeStreamUrl, isEmbed]);
 
   // Handle controls visibility timeout on mouse movement
   useEffect(() => {
@@ -319,7 +342,7 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar, initi
           <video
             id="cinema-html5-video"
             ref={videoRef}
-            src={currentVideoUrl}
+            src={activeStreamUrl}
             className="w-full h-full object-contain cursor-pointer"
             onClick={togglePlay}
             onTimeUpdate={handleTimeUpdate}

@@ -763,7 +763,8 @@ Best Regards,
                           setCustomVideoUrl(res.mediaKey);
                         } catch (err) {
                           console.error('Error saving video:', err);
-                          setCustomVideoUrl(URL.createObjectURL(file));
+                          const fallbackUrl = URL.createObjectURL(file);
+                          setCustomVideoUrl(fallbackUrl);
                         }
                       }
                     }}
