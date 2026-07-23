@@ -185,6 +185,9 @@ export default function AdminPanel({
     if (url.startsWith('data:')) {
       return { provider: 'Base64 Data Stream (Firestore Doc Inline)', color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20', icon: '⚡' };
     }
+    if (url.includes('file.garden')) {
+      return { provider: 'File Garden CDN (TPF Cinemas Vault)', color: 'text-emerald-300', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', icon: '🪴' };
+    }
     if (url.includes('commondatastorage.googleapis.com') || url.includes('storage.googleapis.com')) {
       return { provider: 'Google Cloud Storage CDN (Multi-Region Bucket)', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20', icon: '☁️' };
     }
@@ -2756,7 +2759,46 @@ export default function AdminPanel({
           </div>
 
           {/* Provider Matrix for 50GB Hosting */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* File Garden Media Host */}
+            <div className="bg-[#0b0b0d] p-5 rounded-xl border border-emerald-500/40 hover:border-emerald-400 transition-all flex flex-col justify-between gap-4 shadow-lg shadow-emerald-500/5">
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <span className="p-2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <FolderPlus className="h-5 w-5" />
+                  </span>
+                  <span className="text-[9px] font-mono bg-emerald-500 text-black px-2 py-0.5 rounded font-extrabold uppercase">
+                    TPF CINEMAS HOST
+                  </span>
+                </div>
+                <h4 className="text-base font-bold text-white">File Garden Storage</h4>
+                <p className="text-xs text-white/60 leading-relaxed font-sans">
+                  Direct static media host configured for TPF Cinemas. Streams raw <code className="text-emerald-400 font-mono">.mp4</code>, trailers, posters, and avatars with zero iframe restrictions or watermarks.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2 pt-3 border-t border-white/5 font-mono text-[10px]">
+                <div className="flex justify-between text-white/50">
+                  <span>Vault Folder:</span>
+                  <span className="text-emerald-300 font-bold truncate max-w-[130px]">TPF Cinemas</span>
+                </div>
+                <div className="flex justify-between text-white/50 items-center">
+                  <span>Vault Link:</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText('https://file.garden/amI468QeMk0LFNPy/TPF%20Cinemas/');
+                      setTestVideoUrl('https://file.garden/amI468QeMk0LFNPy/TPF%20Cinemas/');
+                    }}
+                    className="text-amber-400 hover:underline flex items-center gap-1 cursor-pointer font-bold"
+                  >
+                    <span>Copy Vault Path</span>
+                    <Copy className="h-3 w-3" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
             {/* Cloudflare R2 */}
             <div className="bg-[#0b0b0d] p-5 rounded-xl border border-amber-500/30 hover:border-amber-500 transition-all flex flex-col justify-between gap-4">
               <div className="flex flex-col gap-2">
