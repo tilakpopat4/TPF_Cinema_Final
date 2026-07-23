@@ -49,13 +49,13 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar, initi
     setShowPauseSlide(false);
   }, [film, initialEpisodeIndex]);
 
-  // Netflix-style Pause Title Slide timer: shows title slide 5 seconds after pausing
+  // Netflix-style Pause Title Slide timer: shows full screen pause slide 1.5s after pausing
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (!isPlaying) {
       timer = setTimeout(() => {
         setShowPauseSlide(true);
-      }, 5000);
+      }, 1500);
     } else {
       setShowPauseSlide(false);
     }
@@ -413,66 +413,64 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar, initi
           </div>
         )}
 
-        {/* Netflix-style Pause Title Slide Overlay (slides in from left after 5 seconds of pause) */}
+        {/* Netflix-style Full Screen Pause Title Slide Overlay */}
         <div
           id="netflix-pause-title-slide"
-          className={`absolute inset-y-0 left-0 z-25 w-full sm:w-[420px] md:w-[480px] bg-gradient-to-r from-black/95 via-black/85 via-70% to-transparent p-6 sm:p-8 md:p-10 flex flex-col justify-center gap-2.5 sm:gap-3 transition-all duration-700 ease-out transform ${
-            showPauseSlide ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0 pointer-events-none'
+          onClick={togglePlay}
+          className={`absolute inset-0 z-30 bg-gradient-to-r from-black/90 via-black/70 via-60% to-black/40 backdrop-blur-[2px] p-8 sm:p-14 md:p-20 flex flex-col justify-between transition-all duration-500 ease-out cursor-pointer ${
+            showPauseSlide ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
           }`}
-          onClick={(e) => e.stopPropagation()}
         >
-          {/* Badge */}
-          <div className="flex items-center gap-2">
-            <span className="text-[9px] sm:text-[10px] font-mono font-bold uppercase tracking-widest bg-amber-500 text-black px-2.5 py-0.5 rounded shadow">
-              PAUSED
-            </span>
-            <span className="text-[9px] sm:text-[10px] font-mono font-bold uppercase tracking-widest bg-white/10 text-amber-400 px-2.5 py-0.5 rounded border border-amber-500/30 backdrop-blur-sm">
-              ★ YOU'RE WATCHING
-            </span>
-          </div>
-
-          {/* Title */}
-          <h3 className="text-2xl sm:text-3xl md:text-4xl font-black text-[#F5F5F7] uppercase font-display leading-[1.05] tracking-tight drop-shadow-2xl my-1">
-            {film.title}
-          </h3>
-
-          {/* Episode Info if Series */}
-          {film.type === 'series' && currentEpisode && (
-            <div className="flex items-center gap-2 text-xs font-mono text-amber-400 font-bold bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded w-fit my-0.5">
-              <span>EPISODE {activeEpisodeIdx + 1}:</span>
-              <span className="text-white/90 truncate max-w-[200px] sm:max-w-[240px]">{currentEpisode.title}</span>
+          {/* Main Left-Aligned Text Content */}
+          <div className="flex flex-col justify-center my-auto max-w-2xl text-left select-none gap-2 sm:gap-3">
+            {/* Subtitle */}
+            <div className="text-white/80 font-sans text-sm sm:text-base md:text-lg font-normal tracking-wide">
+              {film.type === 'series' && currentEpisode 
+                ? `You're Watching S1:E${activeEpisodeIdx + 1}` 
+                : "You're Watching"}
             </div>
-          )}
 
-          {/* Metadata Row */}
-          <div className="flex flex-wrap items-center gap-2 text-[10px] sm:text-xs font-mono text-white/60">
-            <span className="text-white/90 font-bold">{film.releaseYear}</span>
-            <span>•</span>
-            <span className="text-amber-400 uppercase font-bold">{film.type === 'series' ? 'Web Series' : 'Short Film'}</span>
-            <span>•</span>
-            <span>{film.genre}</span>
-            <span>•</span>
-            <span>{film.duration}</span>
-          </div>
+            {/* Title */}
+            <h2 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white font-sans tracking-tight leading-[1.05] drop-shadow-2xl my-1">
+              {film.type === 'series' && currentEpisode ? currentEpisode.title : film.title}
+            </h2>
 
-          {/* Description */}
-          <p className="text-xs sm:text-sm text-white/80 font-sans leading-relaxed line-clamp-3 max-w-sm drop-shadow-md">
-            {film.description}
-          </p>
+            {/* Metadata Row: Year, Rating, Duration */}
+            <div className="flex flex-wrap items-center gap-3 sm:gap-5 text-xs sm:text-sm font-semibold text-white/90 font-sans pt-1">
+              <span className="text-white font-bold">{film.releaseYear || '2026'}</span>
+              <span className="px-1.5 py-0.5 border border-white/40 text-[10px] sm:text-xs rounded font-mono font-bold uppercase tracking-wider text-white">
+                {film.ageRating || 'U/A 16+'}
+              </span>
+              <span className="text-white/90">{film.duration || '3h 14m'}</span>
+              {film.type === 'series' && (
+                <span className="px-2 py-0.5 bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] sm:text-xs rounded font-bold uppercase">
+                  Web Series
+                </span>
+              )}
+            </div>
 
-          {/* Action / Resume Button */}
-          <div className="flex items-center gap-3 pt-3">
-            <button
-              id="pause-slide-resume-btn"
-              type="button"
-              onClick={togglePlay}
-              className="flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 bg-amber-500 hover:bg-amber-400 text-black rounded-lg text-xs font-extrabold uppercase tracking-wider transition-all cursor-pointer shadow-xl active:scale-95"
-            >
-              <Play className="h-4 w-4 fill-current" />
-              <span>Resume Playback</span>
-            </button>
-            <div className="text-[10px] font-mono text-white/50 truncate max-w-[150px]">
-              Dir. {film.director}
+            {/* Description */}
+            <p className="text-xs sm:text-sm md:text-base text-white/80 font-sans leading-relaxed max-w-xl line-clamp-3 pt-2 drop-shadow-sm">
+              {film.description}
+            </p>
+
+            {/* Resume Button Action */}
+            <div className="pt-4 flex items-center gap-3">
+              <button
+                id="pause-slide-resume-btn"
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  togglePlay();
+                }}
+                className="flex items-center gap-2.5 px-5 sm:px-6 py-2.5 sm:py-3 bg-red-600 hover:bg-red-500 text-white rounded-md text-xs sm:text-sm font-extrabold uppercase tracking-wider transition-all cursor-pointer shadow-2xl active:scale-95"
+              >
+                <Play className="h-4 w-4 fill-current" />
+                <span>Resume Playback</span>
+              </button>
+              <span className="text-xs text-white/50 font-sans hidden sm:inline">
+                Click anywhere on screen to play
+              </span>
             </div>
           </div>
         </div>

@@ -74,6 +74,51 @@ export default function AdminPanel({
   // --- Inspection Modal State ---
   const [inspectFilmmaker, setInspectFilmmaker] = useState<Filmmaker | null>(null);
 
+  // --- Cloud & Storage Exact Location Inspector State ---
+  interface CloudLocationInfo {
+    title: string;
+    type: string;
+    id: string;
+    collection: string;
+    docPath: string;
+    videoUrl?: string;
+    posterUrl?: string;
+    landscapePoster?: string;
+    thumbnailUrl?: string;
+    avatar?: string;
+    episodes?: Array<{ id: string; title: string; videoUrl: string; thumbnailUrl?: string }>;
+  }
+
+  const [inspectCloudItem, setInspectCloudItem] = useState<CloudLocationInfo | null>(null);
+  const [cloudDirectoryFilter, setCloudDirectoryFilter] = useState<'all' | 'films' | 'filmmakers' | 'upcoming_films' | 'master_uploads'>('all');
+  const [cloudDirectorySearch, setCloudDirectorySearch] = useState('');
+
+  function getCloudStorageProvider(url?: string) {
+    if (!url) return { provider: 'Empty / Unspecified', color: 'text-white/40', bg: 'bg-white/5', border: 'border-white/10', icon: '❓' };
+    if (url.startsWith('indexeddb:')) {
+      return { provider: 'IndexedDB Media Vault (Browser Store)', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', icon: '💾' };
+    }
+    if (url.startsWith('data:')) {
+      return { provider: 'Base64 Data Stream (Firestore Doc Inline)', color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20', icon: '⚡' };
+    }
+    if (url.includes('commondatastorage.googleapis.com') || url.includes('storage.googleapis.com')) {
+      return { provider: 'Google Cloud Storage CDN (Multi-Region Bucket)', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20', icon: '☁️' };
+    }
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      return { provider: 'YouTube Video Pipeline Stream', color: 'text-rose-400', bg: 'bg-rose-500/10', border: 'border-rose-500/20', icon: '▶️' };
+    }
+    if (url.includes('drive.google.com')) {
+      return { provider: 'Google Drive Stream Proxy', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20', icon: '📁' };
+    }
+    if (url.includes('unsplash.com')) {
+      return { provider: 'Unsplash Global Image CDN', color: 'text-sky-400', bg: 'bg-sky-500/10', border: 'border-sky-500/20', icon: '🖼️' };
+    }
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return { provider: 'Direct Cloud CDN / Object Storage (S3 / R2)', color: 'text-amber-300', bg: 'bg-amber-500/10', border: 'border-amber-500/20', icon: '🌐' };
+    }
+    return { provider: 'Custom Media Stream Link', color: 'text-white/80', bg: 'bg-white/5', border: 'border-white/10', icon: '🔗' };
+  }
+
   const handleSetSpotlightFilmmaker = (fmId: string) => {
     const selected = filmmakers.find(f => f.id === fmId);
     if (!selected) return;
@@ -1843,6 +1888,23 @@ export default function AdminPanel({
                         <td className="py-3 px-2 text-right">
                           <div className="flex items-center justify-end gap-1.5">
                             <button
+                              onClick={() => setInspectCloudItem({
+                                title: f.title,
+                                type: f.type === 'series' ? 'Web Series' : 'Short Film',
+                                id: f.id,
+                                collection: 'films',
+                                docPath: `films/${f.id}`,
+                                videoUrl: f.videoUrl,
+                                posterUrl: f.posterUrl,
+                                landscapePoster: f.landscapePoster,
+                                episodes: f.episodes
+                              })}
+                              className="p-1.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded text-amber-300 cursor-pointer transition-all"
+                              title="Inspect Exact Cloud Database Location & Media Links"
+                            >
+                              <Database className="h-3.5 w-3.5" />
+                            </button>
+                            <button
                               onClick={() => startEditFilm(f)}
                               className="p-1.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded text-white/70 hover:text-white cursor-pointer transition-all"
                               title="Edit Registry Entry"
@@ -1981,9 +2043,24 @@ export default function AdminPanel({
                                 >
                                   <Star className="h-3.5 w-3.5 fill-current" />
                                 </button>
+                                 <button
+                                  onClick={() => setInspectCloudItem({
+                                    title: fm.name,
+                                    type: 'Filmmaker Profile',
+                                    id: fm.id,
+                                    collection: 'filmmakers',
+                                    docPath: `filmmakers/${fm.id}`,
+                                    avatar: fm.avatar,
+                                    posterUrl: fm.avatar
+                                  })}
+                                  className="p-1.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded text-amber-300 cursor-pointer transition-all"
+                                  title="Inspect Cloud Database Location & Links"
+                                >
+                                  <Database className="h-3.5 w-3.5" />
+                                </button>
                                 <button
                                   onClick={() => setInspectFilmmaker(fm)}
-                                  className="p-1.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded text-amber-300 cursor-pointer transition-all"
+                                  className="p-1.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded text-white/70 hover:text-white cursor-pointer transition-all"
                                   title="Inspect full profile & catalog"
                                 >
                                   <Eye className="h-3.5 w-3.5" />
@@ -2060,6 +2137,22 @@ export default function AdminPanel({
                         </td>
                         <td className="py-3 px-2 text-right">
                           <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              onClick={() => setInspectCloudItem({
+                                title: uf.title,
+                                type: 'Upcoming Trailer',
+                                id: uf.id,
+                                collection: 'upcoming_films',
+                                docPath: `upcoming_films/${uf.id}`,
+                                videoUrl: uf.videoUrl,
+                                thumbnailUrl: uf.thumbnailUrl,
+                                posterUrl: uf.thumbnailUrl
+                              })}
+                              className="p-1.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded text-amber-300 cursor-pointer transition-all"
+                              title="Inspect Cloud Database Location & Links"
+                            >
+                              <Database className="h-3.5 w-3.5" />
+                            </button>
                             <button
                               onClick={() => startEditUpcoming(uf)}
                               className="p-1.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded text-white/70 hover:text-white cursor-pointer transition-all"
@@ -2603,6 +2696,309 @@ export default function AdminPanel({
 ]`}
             </pre>
           </div>
+
+          {/* EXACT CLOUD DATABASE & DIRECT LINK LOCATION DIRECTORY */}
+          <div className="bg-[#0b0b0d] p-6 rounded-xl border border-amber-500/40 shadow-2xl flex flex-col gap-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-400">
+                  <Database className="h-6 w-6 animate-pulse" />
+                </div>
+                <div>
+                  <h4 className="text-base font-bold uppercase tracking-wider font-mono text-white flex items-center gap-2">
+                    Exact Cloud Database & Link Storage Location Vault
+                  </h4>
+                  <p className="text-xs text-white/60 font-sans">
+                    Complete transparent view of Google Cloud Firestore collection documents, exact cloud paths, and direct media streaming URLs.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 bg-black/60 p-2.5 rounded-lg border border-white/10 font-mono text-xs">
+                <Cloud className="h-4 w-4 text-amber-400" />
+                <span className="text-white/50">Firestore DB ID:</span>
+                <span className="text-amber-400 font-bold truncate max-w-[180px]">ai-studio-tpfcinemas...</span>
+              </div>
+            </div>
+
+            {/* Cloud Architecture Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 font-mono text-xs">
+              <div className="bg-black/60 border border-white/10 p-3.5 rounded-xl flex flex-col gap-1">
+                <span className="text-[10px] text-white/40 uppercase">Films & Series Docs</span>
+                <span className="text-xl font-bold text-amber-400 font-display">{films.length} Items</span>
+                <span className="text-[9px] text-emerald-400">firestore://films/</span>
+              </div>
+              <div className="bg-black/60 border border-white/10 p-3.5 rounded-xl flex flex-col gap-1">
+                <span className="text-[10px] text-white/40 uppercase">Filmmaker Profiles</span>
+                <span className="text-xl font-bold text-amber-400 font-display">{filmmakers.length} Profiles</span>
+                <span className="text-[9px] text-emerald-400">firestore://filmmakers/</span>
+              </div>
+              <div className="bg-black/60 border border-white/10 p-3.5 rounded-xl flex flex-col gap-1">
+                <span className="text-[10px] text-white/40 uppercase">Upcoming Trailers</span>
+                <span className="text-xl font-bold text-amber-400 font-display">{upcomingFilms.length} Trailers</span>
+                <span className="text-[9px] text-emerald-400">firestore://upcoming_films/</span>
+              </div>
+              <div className="bg-black/60 border border-white/10 p-3.5 rounded-xl flex flex-col gap-1">
+                <span className="text-[10px] text-white/40 uppercase">Local Media Vault</span>
+                <span className="text-xl font-bold text-emerald-400 font-display">{masterVideos.length} Files</span>
+                <span className="text-[9px] text-emerald-400">indexeddb://tpf_media_storage_v1</span>
+              </div>
+            </div>
+
+            {/* Collection Filter & Search Controls */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-black/40 p-3 rounded-xl border border-white/5">
+              <div className="flex flex-wrap items-center gap-1.5 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={() => setCloudDirectoryFilter('all')}
+                  className={`px-3 py-1.5 rounded text-xs font-mono font-bold uppercase transition-all ${
+                    cloudDirectoryFilter === 'all' ? 'bg-amber-500 text-black shadow-md' : 'bg-white/5 text-white/60 hover:text-white'
+                  }`}
+                >
+                  All Links ({films.length + filmmakers.length + upcomingFilms.length + masterVideos.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCloudDirectoryFilter('films')}
+                  className={`px-3 py-1.5 rounded text-xs font-mono font-bold uppercase transition-all ${
+                    cloudDirectoryFilter === 'films' ? 'bg-amber-500 text-black shadow-md' : 'bg-white/5 text-white/60 hover:text-white'
+                  }`}
+                >
+                  Films & Series ({films.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCloudDirectoryFilter('filmmakers')}
+                  className={`px-3 py-1.5 rounded text-xs font-mono font-bold uppercase transition-all ${
+                    cloudDirectoryFilter === 'filmmakers' ? 'bg-amber-500 text-black shadow-md' : 'bg-white/5 text-white/60 hover:text-white'
+                  }`}
+                >
+                  Filmmakers ({filmmakers.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCloudDirectoryFilter('upcoming_films')}
+                  className={`px-3 py-1.5 rounded text-xs font-mono font-bold uppercase transition-all ${
+                    cloudDirectoryFilter === 'upcoming_films' ? 'bg-amber-500 text-black shadow-md' : 'bg-white/5 text-white/60 hover:text-white'
+                  }`}
+                >
+                  Upcoming ({upcomingFilms.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCloudDirectoryFilter('master_uploads')}
+                  className={`px-3 py-1.5 rounded text-xs font-mono font-bold uppercase transition-all ${
+                    cloudDirectoryFilter === 'master_uploads' ? 'bg-amber-500 text-black shadow-md' : 'bg-white/5 text-white/60 hover:text-white'
+                  }`}
+                >
+                  Master Uploads ({masterVideos.length})
+                </button>
+              </div>
+
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-white/40" />
+                <input
+                  type="text"
+                  value={cloudDirectorySearch}
+                  onChange={(e) => setCloudDirectorySearch(e.target.value)}
+                  placeholder="Filter by title, path, or URL..."
+                  className="w-full bg-black border border-white/10 pl-8 pr-3 py-1.5 rounded text-xs text-white placeholder-white/30 focus:outline-none focus:border-amber-500 font-mono"
+                />
+              </div>
+            </div>
+
+            {/* Direct Links Location Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs text-white/80 border-collapse">
+                <thead>
+                  <tr className="border-b border-white/10 text-[10px] font-mono text-white/40 uppercase">
+                    <th className="py-3 px-3">Content Item & Category</th>
+                    <th className="py-3 px-3">Firestore Cloud Path</th>
+                    <th className="py-3 px-3">Video Stream Link & Provider</th>
+                    <th className="py-3 px-3">Poster Artwork Link</th>
+                    <th className="py-3 px-3 text-right">Inspect</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5 font-mono">
+                  {(() => {
+                    const allItems: Array<{
+                      title: string;
+                      type: string;
+                      id: string;
+                      collection: string;
+                      docPath: string;
+                      videoUrl?: string;
+                      posterUrl?: string;
+                      landscapePoster?: string;
+                      thumbnailUrl?: string;
+                      avatar?: string;
+                      episodes?: any[];
+                    }> = [];
+
+                    if (cloudDirectoryFilter === 'all' || cloudDirectoryFilter === 'films') {
+                      films.forEach(f => allItems.push({
+                        title: f.title,
+                        type: f.type === 'series' ? 'Web Series' : 'Short Film',
+                        id: f.id,
+                        collection: 'films',
+                        docPath: `films/${f.id}`,
+                        videoUrl: f.videoUrl,
+                        posterUrl: f.posterUrl,
+                        landscapePoster: f.landscapePoster,
+                        episodes: f.episodes
+                      }));
+                    }
+
+                    if (cloudDirectoryFilter === 'all' || cloudDirectoryFilter === 'filmmakers') {
+                      filmmakers.forEach(fm => allItems.push({
+                        title: fm.name,
+                        type: 'Filmmaker Profile',
+                        id: fm.id,
+                        collection: 'filmmakers',
+                        docPath: `filmmakers/${fm.id}`,
+                        avatar: fm.avatar,
+                        posterUrl: fm.avatar
+                      }));
+                    }
+
+                    if (cloudDirectoryFilter === 'all' || cloudDirectoryFilter === 'upcoming_films') {
+                      upcomingFilms.forEach(uf => allItems.push({
+                        title: uf.title,
+                        type: 'Upcoming Trailer',
+                        id: uf.id,
+                        collection: 'upcoming_films',
+                        docPath: `upcoming_films/${uf.id}`,
+                        videoUrl: uf.videoUrl,
+                        thumbnailUrl: uf.thumbnailUrl,
+                        posterUrl: uf.thumbnailUrl
+                      }));
+                    }
+
+                    if (cloudDirectoryFilter === 'all' || cloudDirectoryFilter === 'master_uploads') {
+                      masterVideos.forEach(mv => allItems.push({
+                        title: mv.fileName,
+                        type: '50GB Master Upload',
+                        id: mv.id,
+                        collection: 'media_vault',
+                        docPath: `IndexedDB / ${mv.fileName}`,
+                        videoUrl: mv.videoUrl
+                      }));
+                    }
+
+                    const filtered = allItems.filter(item => {
+                      if (!cloudDirectorySearch.trim()) return true;
+                      const q = cloudDirectorySearch.toLowerCase();
+                      return item.title.toLowerCase().includes(q) ||
+                        item.docPath.toLowerCase().includes(q) ||
+                        (item.videoUrl && item.videoUrl.toLowerCase().includes(q)) ||
+                        (item.posterUrl && item.posterUrl.toLowerCase().includes(q));
+                    });
+
+                    if (filtered.length === 0) {
+                      return (
+                        <tr>
+                          <td colSpan={5} className="py-8 text-center text-white/30">
+                            No cloud links matching search filter.
+                          </td>
+                        </tr>
+                      );
+                    }
+
+                    return filtered.map((item) => {
+                      const vidProv = getCloudStorageProvider(item.videoUrl);
+                      const imgProv = getCloudStorageProvider(item.posterUrl || item.avatar || item.thumbnailUrl);
+
+                      return (
+                        <tr key={`${item.collection}-${item.id}`} className="hover:bg-white/[0.02] transition-colors group">
+                          <td className="py-3 px-3">
+                            <div className="flex flex-col">
+                              <span className="font-bold text-white group-hover:text-amber-400 transition-colors text-xs font-sans">
+                                {item.title}
+                              </span>
+                              <span className="text-[9px] text-amber-500 uppercase mt-0.5">
+                                {item.type}
+                              </span>
+                            </div>
+                          </td>
+
+                          <td className="py-3 px-3">
+                            <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20 font-bold block w-fit">
+                              {item.docPath}
+                            </span>
+                          </td>
+
+                          <td className="py-3 px-3">
+                            {item.videoUrl ? (
+                              <div className="flex flex-col gap-1 max-w-[220px]">
+                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border w-fit flex items-center gap-1 ${vidProv.color} ${vidProv.bg} ${vidProv.border}`}>
+                                  <span>{vidProv.icon}</span> {vidProv.provider}
+                                </span>
+                                <div className="flex items-center gap-1">
+                                  <span className="text-[10px] text-white/60 truncate flex-1 select-all" title={item.videoUrl}>
+                                    {item.videoUrl}
+                                  </span>
+                                  <button
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(item.videoUrl || '');
+                                      alert(`Copied Video URL for "${item.title}"!`);
+                                    }}
+                                    className="p-1 bg-white/5 hover:bg-white/10 rounded text-amber-400 cursor-pointer shrink-0"
+                                    title="Copy Video URL"
+                                  >
+                                    <Copy className="h-3 w-3" />
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <span className="text-white/30 text-[10px]">No Video Link</span>
+                            )}
+                          </td>
+
+                          <td className="py-3 px-3">
+                            {(item.posterUrl || item.avatar || item.thumbnailUrl) ? (
+                              <div className="flex flex-col gap-1 max-w-[220px]">
+                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border w-fit flex items-center gap-1 ${imgProv.color} ${imgProv.bg} ${imgProv.border}`}>
+                                  <span>{imgProv.icon}</span> {imgProv.provider}
+                                </span>
+                                <div className="flex items-center gap-1">
+                                  <span className="text-[10px] text-white/60 truncate flex-1 select-all" title={item.posterUrl || item.avatar || item.thumbnailUrl}>
+                                    {item.posterUrl || item.avatar || item.thumbnailUrl}
+                                  </span>
+                                  <button
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(item.posterUrl || item.avatar || item.thumbnailUrl || '');
+                                      alert(`Copied Poster URL for "${item.title}"!`);
+                                    }}
+                                    className="p-1 bg-white/5 hover:bg-white/10 rounded text-amber-400 cursor-pointer shrink-0"
+                                    title="Copy Poster URL"
+                                  >
+                                    <Copy className="h-3 w-3" />
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <span className="text-white/30 text-[10px]">No Poster Link</span>
+                            )}
+                          </td>
+
+                          <td className="py-3 px-3 text-right">
+                            <button
+                              onClick={() => setInspectCloudItem(item)}
+                              className="px-2.5 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded text-[10px] font-bold uppercase transition-all cursor-pointer flex items-center gap-1 ml-auto shrink-0"
+                            >
+                              <Database className="h-3 w-3" />
+                              Inspect
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    });
+                  })()}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
         </div>
       )}
 
@@ -3249,6 +3645,223 @@ export default function AdminPanel({
                   </div>
                 );
               })()}
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* Cloud & Database Storage Location Inspector Modal */}
+      {inspectCloudItem && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-[#0f0f13] border border-amber-500/40 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col gap-6 p-6 relative">
+            
+            {/* Header */}
+            <div className="flex items-start justify-between border-b border-white/10 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-400">
+                  <Database className="h-6 w-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-amber-500 text-black">
+                      {inspectCloudItem.type}
+                    </span>
+                    <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      LIVE IN FIRESTORE
+                    </span>
+                  </div>
+                  <h3 className="text-xl font-bold text-white font-display uppercase tracking-tight mt-1">
+                    {inspectCloudItem.title}
+                  </h3>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setInspectCloudItem(null)}
+                className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white/60 hover:text-white cursor-pointer transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Cloud Database Location Info */}
+            <div className="bg-black/60 border border-white/10 rounded-xl p-4 flex flex-col gap-3 font-mono text-xs">
+              <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                <span className="text-white/40 uppercase text-[10px]">Cloud Database Service:</span>
+                <span className="text-amber-400 font-bold flex items-center gap-1">
+                  <Cloud className="h-3.5 w-3.5" /> Google Cloud Firestore
+                </span>
+              </div>
+              <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                <span className="text-white/40 uppercase text-[10px]">Firestore Project Database ID:</span>
+                <span className="text-white font-bold truncate max-w-[300px]">ai-studio-tpfcinemas-cfa7738c-1544-4106-b908-c1d20a64110f</span>
+              </div>
+              <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                <span className="text-white/40 uppercase text-[10px]">Firestore Collection:</span>
+                <span className="text-amber-300 font-bold">/{inspectCloudItem.collection}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-white/40 uppercase text-[10px]">Document Path:</span>
+                <span className="text-emerald-400 font-bold">/{inspectCloudItem.docPath}</span>
+              </div>
+            </div>
+
+            {/* Links & Storage Pipeline Breakdown */}
+            <div className="flex flex-col gap-4">
+              <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2">
+                <LinkIcon className="h-4 w-4" /> Content Storage Links & Stream Endpoints
+              </h4>
+
+              {/* Video Stream URL */}
+              {inspectCloudItem.videoUrl && (() => {
+                const prov = getCloudStorageProvider(inspectCloudItem.videoUrl);
+                return (
+                  <div className="bg-black/40 border border-white/10 rounded-xl p-4 flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono text-white/50 uppercase font-bold">1. Video Stream Link / Media Key</span>
+                      <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border flex items-center gap-1 ${prov.color} ${prov.bg} ${prov.border}`}>
+                        <span>{prov.icon}</span> {prov.provider}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 bg-black border border-white/10 rounded-lg p-2.5">
+                      <span className="text-xs text-white/90 font-mono truncate flex-1 select-all">
+                        {inspectCloudItem.videoUrl}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(inspectCloudItem.videoUrl || '');
+                          alert('Video Stream Link copied to clipboard!');
+                        }}
+                        className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs rounded transition-colors flex items-center gap-1 shrink-0 font-mono cursor-pointer"
+                      >
+                        <Copy className="h-3.5 w-3.5" /> Copy Link
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Poster Artwork URL */}
+              {inspectCloudItem.posterUrl && (() => {
+                const prov = getCloudStorageProvider(inspectCloudItem.posterUrl);
+                return (
+                  <div className="bg-black/40 border border-white/10 rounded-xl p-4 flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono text-white/50 uppercase font-bold">2. Poster Artwork / Image Link</span>
+                      <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border flex items-center gap-1 ${prov.color} ${prov.bg} ${prov.border}`}>
+                        <span>{prov.icon}</span> {prov.provider}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 bg-black border border-white/10 rounded-lg p-2.5">
+                      <span className="text-xs text-white/90 font-mono truncate flex-1 select-all">
+                        {inspectCloudItem.posterUrl}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(inspectCloudItem.posterUrl || '');
+                          alert('Poster Image Link copied to clipboard!');
+                        }}
+                        className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs rounded transition-colors flex items-center gap-1 shrink-0 font-mono cursor-pointer"
+                      >
+                        <Copy className="h-3.5 w-3.5" /> Copy Link
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Landscape Banner URL */}
+              {inspectCloudItem.landscapePoster && (() => {
+                const prov = getCloudStorageProvider(inspectCloudItem.landscapePoster);
+                return (
+                  <div className="bg-black/40 border border-white/10 rounded-xl p-4 flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono text-white/50 uppercase font-bold">3. Landscape Banner Artwork Link</span>
+                      <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border flex items-center gap-1 ${prov.color} ${prov.bg} ${prov.border}`}>
+                        <span>{prov.icon}</span> {prov.provider}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 bg-black border border-white/10 rounded-lg p-2.5">
+                      <span className="text-xs text-white/90 font-mono truncate flex-1 select-all">
+                        {inspectCloudItem.landscapePoster}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(inspectCloudItem.landscapePoster || '');
+                          alert('Landscape Artwork Link copied to clipboard!');
+                        }}
+                        className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs rounded transition-colors flex items-center gap-1 shrink-0 font-mono cursor-pointer"
+                      >
+                        <Copy className="h-3.5 w-3.5" /> Copy Link
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Series Episodes Links */}
+              {inspectCloudItem.episodes && inspectCloudItem.episodes.length > 0 && (
+                <div className="bg-black/40 border border-amber-500/30 rounded-xl p-4 flex flex-col gap-3">
+                  <span className="text-[10px] font-mono text-amber-400 uppercase font-bold">
+                    Web Series Episode Stream Endpoints ({inspectCloudItem.episodes.length} Episodes)
+                  </span>
+                  <div className="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">
+                    {inspectCloudItem.episodes.map((ep, idx) => {
+                      const prov = getCloudStorageProvider(ep.videoUrl);
+                      return (
+                        <div key={ep.id || idx} className="bg-black border border-white/10 rounded-lg p-3 flex flex-col gap-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-white font-mono">
+                              Ep {idx + 1}: {ep.title}
+                            </span>
+                            <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${prov.color} ${prov.bg} ${prov.border}`}>
+                              {prov.provider}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 text-[10px] font-mono">
+                            <span className="text-white/40">Path:</span>
+                            <span className="text-amber-400">films/{inspectCloudItem.id}.episodes[{idx}].videoUrl</span>
+                          </div>
+                          <div className="flex items-center gap-2 bg-white/5 p-1.5 rounded border border-white/5">
+                            <span className="text-xs text-white/80 font-mono truncate flex-1 select-all">
+                              {ep.videoUrl}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(ep.videoUrl);
+                                alert(`Episode ${idx + 1} Video Link copied!`);
+                              }}
+                              className="px-2 py-1 bg-amber-500 hover:bg-amber-400 text-black font-bold text-[10px] rounded transition-colors shrink-0 font-mono cursor-pointer"
+                            >
+                              Copy
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex justify-end border-t border-white/10 pt-4">
+              <button
+                type="button"
+                onClick={() => setInspectCloudItem(null)}
+                className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs uppercase tracking-wider rounded-lg transition-colors cursor-pointer font-mono"
+              >
+                Close Inspector
+              </button>
             </div>
 
           </div>
