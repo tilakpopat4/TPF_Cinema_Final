@@ -62,6 +62,8 @@ export interface Film {
   submittedByUid?: string;
   posterPositionY?: number; // percentage (0 to 100) for vertical crop/pan of portrait poster
   landscapePosterPositionY?: number; // percentage (0 to 100) for vertical crop/pan of landscape poster
+  contentId?: string; // TPF Cinemas unique content ID e.g. TPF-CID-2026-X89K2
+  thumbnailContentId?: string; // TPF Cinemas unique thumbnail asset ID e.g. TPF-THM-2026-P01B9
 }
 
 export interface UpcomingFilm {

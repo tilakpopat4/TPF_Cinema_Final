@@ -3,11 +3,13 @@ import {
   PlusCircle, Sparkles, AlertCircle, Coins, Heart, Eye, 
   User, Globe, Camera, ArrowLeft, CheckCircle, Clock, 
   HelpCircle, QrCode, Clipboard, ExternalLink, Settings, 
-  Activity, ArrowUpRight, Check
+  Activity, ArrowUpRight, Check, Award, FileText, Download
 } from 'lucide-react';
 import { Film, Filmmaker, Tip } from '../types';
 import { getDirectImageUrl } from '../lib/driveUtils';
 import SubmissionModal from './SubmissionModal';
+import CertificateModal from './CertificateModal';
+import { getContentId, getThumbnailContentId, generateScreeningCertificatePDF } from '../lib/certificateGenerator';
 
 interface FilmmakerStudioProps {
   currentUser: any;
@@ -47,6 +49,7 @@ export default function FilmmakerStudio({
   // Tab State inside Dashboard
   const [activeTab, setActiveTab] = useState<'dashboard' | 'my-films' | 'profile-settings'>('dashboard');
   const [showSubmitModal, setShowSubmitModal] = useState(false);
+  const [selectedCertFilm, setSelectedCertFilm] = useState<Film | null>(null);
 
   // Filter films submitted by this filmmaker
   const myFilms = films.filter(
@@ -478,32 +481,42 @@ export default function FilmmakerStudio({
                   <table className="w-full text-left border-collapse font-sans text-xs">
                     <thead>
                       <tr className="border-b border-white/10 text-white/40 uppercase text-[9px] tracking-widest font-mono">
-                        <th className="py-3 px-4 font-normal">Project Title</th>
+                        <th className="py-3 px-4 font-normal">Project & TPF Identifiers</th>
                         <th className="py-3 px-4 font-normal">Format</th>
                         <th className="py-3 px-4 font-normal">Views</th>
                         <th className="py-3 px-4 font-normal">Likes</th>
                         <th className="py-3 px-4 font-normal text-right">Direct Funds</th>
                         <th className="py-3 px-4 text-center font-normal">Approval Status</th>
+                        <th className="py-3 px-4 text-right font-normal">Rights Certificate</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
                       {myFilms.map((film) => {
                         const status = film.approvalStatus || 'approved'; // Seeded films are approved
+                        const contentId = getContentId(film);
+                        const thumbId = getThumbnailContentId(film);
                         
                         return (
                           <tr key={film.id} className="hover:bg-white/[0.02] transition-colors">
-                            {/* Title & Thumbnail */}
+                            {/* Title & Thumbnail & Identifiers */}
                             <td className="py-3 px-4 flex items-center gap-3">
                               <img
                                 src={getDirectImageUrl(film.posterUrl)}
                                 alt={film.title}
-                                className="w-9 h-12 object-cover rounded border border-white/10 shrink-0"
+                                className="w-10 h-14 object-cover rounded-md border border-white/10 shrink-0 shadow-md"
                                 style={{ objectPosition: `center ${film.posterPositionY ?? 50}%` }}
                                 referrerPolicy="no-referrer"
                               />
-                              <div className="flex flex-col">
+                              <div className="flex flex-col gap-1">
                                 <span className="font-semibold text-white text-xs">{film.title}</span>
-                                <span className="text-[9px] text-white/40 font-mono uppercase">{film.genre.join(', ')}</span>
+                                <div className="flex flex-wrap items-center gap-1.5 font-mono text-[9px]">
+                                  <span className="bg-amber-500/15 text-amber-300 border border-amber-500/30 px-1.5 py-0.5 rounded font-bold">
+                                    {contentId}
+                                  </span>
+                                  <span className="bg-white/5 text-white/50 border border-white/10 px-1.5 py-0.5 rounded">
+                                    Thumb: {thumbId}
+                                  </span>
+                                </div>
                               </div>
                             </td>
 
@@ -548,6 +561,36 @@ export default function FilmmakerStudio({
                                 </span>
                               )}
                             </td>
+
+                            {/* Certificate Download CTA */}
+                            <td className="py-3 px-4 text-right">
+                              {status === 'approved' ? (
+                                <div className="flex items-center justify-end gap-1.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedCertFilm(film)}
+                                    className="px-2.5 py-1.5 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 rounded text-[10px] font-mono font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1 shadow-sm"
+                                    title="Preview Rights Certificate"
+                                  >
+                                    <Award className="h-3 w-3 text-amber-400" />
+                                    <span>Certificate</span>
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => generateScreeningCertificatePDF(film, myProfile)}
+                                    className="p-1.5 bg-white/5 hover:bg-white/15 text-white/70 hover:text-white rounded border border-white/10 transition-all cursor-pointer"
+                                    title="Download PDF Certificate Directly"
+                                  >
+                                    <Download className="h-3.5 w-3.5" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <span className="text-[9px] text-white/30 font-mono italic">
+                                  Available on approval
+                                </span>
+                              )}
+                            </td>
                           </tr>
                         );
                       })}
@@ -559,6 +602,15 @@ export default function FilmmakerStudio({
           )}
 
         </div>
+      )}
+
+      {/* Certificate Modal */}
+      {selectedCertFilm && (
+        <CertificateModal
+          film={selectedCertFilm}
+          filmmaker={myProfile}
+          onClose={() => setSelectedCertFilm(null)}
+        />
       )}
 
       {/* Embedded Submission modal inside the dashboard */}

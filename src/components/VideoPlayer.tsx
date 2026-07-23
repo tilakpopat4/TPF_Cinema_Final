@@ -8,6 +8,7 @@ import {
 import { Film } from '../types';
 import { getVideoEmbedData } from '../lib/driveUtils';
 import { resolveMediaUrl } from '../lib/mediaStorage';
+import { getContentId, getThumbnailContentId } from '../lib/certificateGenerator';
 
 interface VideoPlayerProps {
   film: Film;
@@ -998,6 +999,18 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar, initi
           </h3>
 
           <div className="flex flex-col gap-3">
+            {/* TPF Unique Content ID */}
+            <div className="flex items-center justify-between gap-2 border-b border-white/5 pb-2">
+              <span className="text-[10px] text-amber-400 font-mono font-bold uppercase tracking-wider">TPF Content ID:</span>
+              <span className="text-xs font-mono font-bold text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">{getContentId(film)}</span>
+            </div>
+
+            {/* TPF Unique Thumbnail ID */}
+            <div className="flex items-center justify-between gap-2 border-b border-white/5 pb-2">
+              <span className="text-[10px] text-white/50 font-mono uppercase tracking-wider">Thumbnail Asset ID:</span>
+              <span className="text-[11px] font-mono text-white/80 bg-white/5 px-2 py-0.5 rounded border border-white/10">{getThumbnailContentId(film)}</span>
+            </div>
+
             {/* Director */}
             <div className="flex items-start justify-between gap-2">
               <span className="text-[10px] text-white/40 font-mono uppercase tracking-wider">Director:</span>

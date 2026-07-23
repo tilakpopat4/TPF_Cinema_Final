@@ -4,6 +4,8 @@ import {
 } from '../types';
 import { getDirectImageUrl } from '../lib/driveUtils';
 import { saveMediaFile } from '../lib/mediaStorage';
+import CertificateModal from './CertificateModal';
+import { getContentId, getThumbnailContentId, generateScreeningCertificatePDF } from '../lib/certificateGenerator';
 import { 
   Film as FilmIcon, User, Film as UpcomingIcon, Plus, Edit, Trash2, 
   Check, X, Save, Search, Settings, ShieldAlert, ArrowLeft, RefreshCw,
@@ -124,6 +126,7 @@ export default function AdminPanel({
   // --- Editing states ---
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
+  const [selectedCertFilm, setSelectedCertFilm] = useState<Film | null>(null);
 
   // --- Film form state ---
   const [filmForm, setFilmForm] = useState<Partial<Film>>({
@@ -2046,15 +2049,16 @@ export default function AdminPanel({
                           <div className="flex flex-col">
                             <span className="font-bold text-white group-hover:text-amber-400 transition-colors">{f.title}</span>
                             <span className="text-[10px] text-white/40 font-mono">By {f.director}</span>
-                            <div className="flex items-center gap-1.5 mt-1">
+                            <div className="flex flex-wrap items-center gap-1.5 mt-1">
                               <span className={`text-[8px] font-mono font-bold px-1 rounded uppercase ${f.type === 'series' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' : 'bg-white/10 text-white/80 border border-white/10'}`}>
                                 {f.type === 'series' ? 'Web Series' : 'Short Film'}
                               </span>
-                              {f.isFeatured && (
-                                <span className="text-[8px] font-mono font-bold bg-amber-500 text-black px-1 rounded uppercase">
-                                  Featured
-                                </span>
-                              )}
+                              <span className="text-[8px] font-mono font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 px-1 rounded">
+                                {getContentId(f)}
+                              </span>
+                              <span className="text-[8px] font-mono text-white/40 bg-white/5 px-1 rounded border border-white/10">
+                                {getThumbnailContentId(f)}
+                              </span>
                             </div>
                           </div>
                         </td>
@@ -2094,6 +2098,13 @@ export default function AdminPanel({
                         </td>
                         <td className="py-3 px-2 text-right">
                           <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              onClick={() => setSelectedCertFilm(f)}
+                              className="p-1.5 bg-amber-500/15 hover:bg-amber-500/30 border border-amber-500/30 rounded text-amber-300 cursor-pointer transition-all"
+                              title="View & Download Content Screening Rights Certificate"
+                            >
+                              <Award className="h-3.5 w-3.5" />
+                            </button>
                             <button
                               onClick={() => setInspectCloudItem({
                                 title: f.title,
@@ -4112,6 +4123,15 @@ export default function AdminPanel({
 
           </div>
         </div>
+      )}
+
+      {/* Certificate Modal */}
+      {selectedCertFilm && (
+        <CertificateModal
+          film={selectedCertFilm}
+          filmmaker={filmmakers.find(f => f.id === selectedCertFilm.filmmakerId)}
+          onClose={() => setSelectedCertFilm(null)}
+        />
       )}
 
     </div>
