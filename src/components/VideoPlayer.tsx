@@ -36,6 +36,9 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar, initi
   
   // Dynamic live video URL resolution
   const [resolvedVideoUrl, setResolvedVideoUrl] = useState<string>('');
+  
+  // Netflix-style Pause Title Slide state (slides in from left after 5s of pause)
+  const [showPauseSlide, setShowPauseSlide] = useState(false);
 
   // YouTube Stealth Pipeline: Hides YouTube UI, title bars, and branding
   const [stealthPipelineActive, setStealthPipelineActive] = useState(true);
@@ -43,7 +46,21 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar, initi
   // Sync active episode when changing film or initialEpisodeIndex
   useEffect(() => {
     setActiveEpisodeIdx(initialEpisodeIndex || 0);
+    setShowPauseSlide(false);
   }, [film, initialEpisodeIndex]);
+
+  // Netflix-style Pause Title Slide timer: shows title slide 5 seconds after pausing
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (!isPlaying) {
+      timer = setTimeout(() => {
+        setShowPauseSlide(true);
+      }, 5000);
+    } else {
+      setShowPauseSlide(false);
+    }
+    return () => clearTimeout(timer);
+  }, [isPlaying]);
 
   // Always compute normalized episodes list for series
   const episodesList = (film.type === 'series')
@@ -52,8 +69,12 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar, initi
         : [{ id: `${film.id}-ep-1`, title: `${film.title} - Episode 1`, duration: film.duration || 'Full Stream', videoUrl: film.videoUrl }]
     : [];
 
-  const currentVideoUrl = (episodesList.length > 0 && episodesList[activeEpisodeIdx])
-    ? episodesList[activeEpisodeIdx].videoUrl
+  const currentEpisode = (episodesList.length > 0 && episodesList[activeEpisodeIdx])
+    ? episodesList[activeEpisodeIdx]
+    : null;
+
+  const currentVideoUrl = currentEpisode
+    ? currentEpisode.videoUrl
     : film.videoUrl;
 
   // Resolve current video URL asynchronously if it's an indexeddb: or blob: link
@@ -383,7 +404,7 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar, initi
           <div 
             onClick={togglePlay}
             className={`absolute inset-0 flex items-center justify-center bg-black/40 transition-opacity duration-300 cursor-pointer ${
-              isPlaying ? 'opacity-0 pointer-events-none' : 'opacity-100'
+              isPlaying || showPauseSlide ? 'opacity-0 pointer-events-none' : 'opacity-100'
             }`}
           >
             <div className="h-16 w-16 md:h-18 md:w-18 rounded border border-white/25 bg-black/75 text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-all backdrop-blur-md">
@@ -391,6 +412,70 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar, initi
             </div>
           </div>
         )}
+
+        {/* Netflix-style Pause Title Slide Overlay (slides in from left after 5 seconds of pause) */}
+        <div
+          id="netflix-pause-title-slide"
+          className={`absolute inset-y-0 left-0 z-25 w-full sm:w-[420px] md:w-[480px] bg-gradient-to-r from-black/95 via-black/85 via-70% to-transparent p-6 sm:p-8 md:p-10 flex flex-col justify-center gap-2.5 sm:gap-3 transition-all duration-700 ease-out transform ${
+            showPauseSlide ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0 pointer-events-none'
+          }`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Badge */}
+          <div className="flex items-center gap-2">
+            <span className="text-[9px] sm:text-[10px] font-mono font-bold uppercase tracking-widest bg-amber-500 text-black px-2.5 py-0.5 rounded shadow">
+              PAUSED
+            </span>
+            <span className="text-[9px] sm:text-[10px] font-mono font-bold uppercase tracking-widest bg-white/10 text-amber-400 px-2.5 py-0.5 rounded border border-amber-500/30 backdrop-blur-sm">
+              ★ YOU'RE WATCHING
+            </span>
+          </div>
+
+          {/* Title */}
+          <h3 className="text-2xl sm:text-3xl md:text-4xl font-black text-[#F5F5F7] uppercase font-display leading-[1.05] tracking-tight drop-shadow-2xl my-1">
+            {film.title}
+          </h3>
+
+          {/* Episode Info if Series */}
+          {film.type === 'series' && currentEpisode && (
+            <div className="flex items-center gap-2 text-xs font-mono text-amber-400 font-bold bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded w-fit my-0.5">
+              <span>EPISODE {activeEpisodeIdx + 1}:</span>
+              <span className="text-white/90 truncate max-w-[200px] sm:max-w-[240px]">{currentEpisode.title}</span>
+            </div>
+          )}
+
+          {/* Metadata Row */}
+          <div className="flex flex-wrap items-center gap-2 text-[10px] sm:text-xs font-mono text-white/60">
+            <span className="text-white/90 font-bold">{film.releaseYear}</span>
+            <span>•</span>
+            <span className="text-amber-400 uppercase font-bold">{film.type === 'series' ? 'Web Series' : 'Short Film'}</span>
+            <span>•</span>
+            <span>{film.genre}</span>
+            <span>•</span>
+            <span>{film.duration}</span>
+          </div>
+
+          {/* Description */}
+          <p className="text-xs sm:text-sm text-white/80 font-sans leading-relaxed line-clamp-3 max-w-sm drop-shadow-md">
+            {film.description}
+          </p>
+
+          {/* Action / Resume Button */}
+          <div className="flex items-center gap-3 pt-3">
+            <button
+              id="pause-slide-resume-btn"
+              type="button"
+              onClick={togglePlay}
+              className="flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 bg-amber-500 hover:bg-amber-400 text-black rounded-lg text-xs font-extrabold uppercase tracking-wider transition-all cursor-pointer shadow-xl active:scale-95"
+            >
+              <Play className="h-4 w-4 fill-current" />
+              <span>Resume Playback</span>
+            </button>
+            <div className="text-[10px] font-mono text-white/50 truncate max-w-[150px]">
+              Dir. {film.director}
+            </div>
+          </div>
+        </div>
 
         {/* Cinematic Custom HUD Overlay Controls */}
         <div 
