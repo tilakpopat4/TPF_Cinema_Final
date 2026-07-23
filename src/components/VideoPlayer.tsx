@@ -40,6 +40,9 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar, initi
   // Netflix-style Pause Title Slide state (slides in from left after 5s of pause)
   const [showPauseSlide, setShowPauseSlide] = useState(false);
 
+  // YouTube Stealth Pipeline: Hides YouTube UI, title bars, and branding
+  const [stealthPipelineActive, setStealthPipelineActive] = useState(true);
+
   // Auto English Captions & Video Quality states
   const [isCaptionsEnabled, setIsCaptionsEnabled] = useState(false);
   const [videoQuality, setVideoQuality] = useState<'Auto' | '4K' | '1080p' | '720p' | '360p'>('1080p');

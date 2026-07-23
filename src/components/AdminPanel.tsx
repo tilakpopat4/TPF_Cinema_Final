@@ -10,7 +10,8 @@ import {
   ArrowUp, ArrowDown, Move, HardDrive, Server, Globe, Database, Copy, 
   ExternalLink, Zap, Video, ShieldCheck, Play, CheckCircle2, Sparkles, AlertCircle,
   Upload, FileVideo, CloudUpload, ArrowRight, Clock, FolderPlus, Tv, Image,
-  Camera, MapPin, Instagram, Eye, Star, Award, Coins, QrCode, UserCheck
+  Camera, MapPin, Instagram, Eye, Star, Award, Coins, QrCode, UserCheck,
+  Cloud, Link as LinkIcon
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -1896,7 +1897,7 @@ export default function AdminPanel({
                                 docPath: `films/${f.id}`,
                                 videoUrl: f.videoUrl,
                                 posterUrl: f.posterUrl,
-                                landscapePoster: f.landscapePoster,
+                                landscapePoster: f.landscapePosterUrl,
                                 episodes: f.episodes
                               })}
                               className="p-1.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded text-amber-300 cursor-pointer transition-all"
@@ -2844,7 +2845,7 @@ export default function AdminPanel({
                         docPath: `films/${f.id}`,
                         videoUrl: f.videoUrl,
                         posterUrl: f.posterUrl,
-                        landscapePoster: f.landscapePoster,
+                        landscapePoster: f.landscapePosterUrl,
                         episodes: f.episodes
                       }));
                     }
