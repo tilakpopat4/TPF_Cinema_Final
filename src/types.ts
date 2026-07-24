@@ -47,6 +47,7 @@ export interface Film {
   posterUrl: string; // Portrait poster (2:3 aspect ratio)
   landscapePosterUrl?: string; // Landscape poster (16:9 aspect ratio)
   videoUrl: string; // Direct link or mock stream
+  trailerUrl?: string; // Official trailer / teaser video URL or local video file
   cameraUsed?: string; // e.g., "Sony A7III"
   ageRating?: string; // e.g., "U/A 16+"
   filmmakerId: string;

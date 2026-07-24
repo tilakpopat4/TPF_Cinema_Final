@@ -90,6 +90,7 @@ export default function SubmissionModal({ onClose, onSubmit, prefilledUpiId = ''
   const [videoType, setVideoType] = useState<'preset' | 'custom'>('custom');
   const [selectedVideoIdx, setSelectedVideoIdx] = useState(0);
   const [customVideoUrl, setCustomVideoUrl] = useState('');
+  const [trailerUrl, setTrailerUrl] = useState('');
 
   // Dynamic episodes state for web series
   const [episodes, setEpisodes] = useState<Array<{ id: string; title: string; duration: string; videoUrl: string; thumbnailUrl?: string }>>([
@@ -211,6 +212,7 @@ Best Regards,
       posterUrl,
       landscapePosterUrl,
       videoUrl,
+      trailerUrl: trailerUrl.trim() || undefined,
       posterPositionY: portraitPan,
       landscapePosterPositionY: landscapePan,
       episodes: type === 'series' ? episodes.map(ep => ({ ...ep, title: ep.title.trim(), duration: ep.duration.trim(), videoUrl: ep.videoUrl.trim() })) : undefined,
@@ -870,6 +872,54 @@ Best Regards,
                     onChange={(e) => setCustomVideoUrl(e.target.value)}
                     className="w-full bg-white/5 hover:bg-white/10 text-[#F5F5F7] text-xs px-3 py-2.5 rounded border border-white/10 focus:border-amber-500/50 focus:outline-none focus:bg-white/5 transition-all font-sans"
                   />
+                </div>
+
+                {/* Official Trailer Upload / URL */}
+                <div className="bg-amber-500/5 p-3 rounded border border-amber-500/20 flex flex-col gap-2 mt-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[9px] font-mono text-amber-400 uppercase tracking-widest font-bold">
+                      Official Trailer / Teaser (Optional / Recommended)
+                    </label>
+                    <label className="cursor-pointer text-[9px] font-mono font-bold uppercase text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 px-2.5 py-1 rounded border border-amber-500/30 flex items-center gap-1 transition-all">
+                      <span>Upload Local Trailer</span>
+                      <input
+                        type="file"
+                        accept=".mp4,.mov,video/mp4,video/quicktime,video/*"
+                        className="hidden"
+                        onChange={async (e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            const file = e.target.files[0];
+                            try {
+                              const res = await saveMediaFile(file);
+                              setTrailerUrl(res.mediaKey);
+                            } catch (err) {
+                              console.error('Error saving trailer:', err);
+                              setTrailerUrl(URL.createObjectURL(file));
+                            }
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Paste Trailer YouTube, Vimeo, Drive link, or upload local file"
+                    value={trailerUrl}
+                    onChange={(e) => setTrailerUrl(e.target.value)}
+                    className="w-full bg-black/60 text-[#F5F5F7] text-xs px-3 py-2 rounded border border-amber-500/30 focus:border-amber-500 focus:outline-none transition-all font-sans"
+                  />
+                  {trailerUrl && (
+                    <div className="text-[9px] font-mono text-amber-300 flex items-center justify-between bg-amber-500/10 px-2 py-1 rounded border border-amber-500/20">
+                      <span className="truncate max-w-xs">Trailer: {trailerUrl}</span>
+                      <button 
+                        type="button" 
+                        onClick={() => setTrailerUrl('')} 
+                        className="text-white/40 hover:text-white underline text-[9px]"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

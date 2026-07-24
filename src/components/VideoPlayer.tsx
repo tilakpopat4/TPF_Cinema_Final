@@ -34,6 +34,8 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar, initi
   const [activeEpisodeIdx, setActiveEpisodeIdx] = useState(initialEpisodeIndex);
   const [hasError, setHasError] = useState(false);
   
+  const [isPlayingTrailer, setIsPlayingTrailer] = useState(false);
+  
   // Dynamic live video URL resolution
   const [resolvedVideoUrl, setResolvedVideoUrl] = useState<string>('');
   
@@ -196,9 +198,11 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar, initi
     ? episodesList[activeEpisodeIdx]
     : null;
 
-  const currentVideoUrl = currentEpisode
-    ? currentEpisode.videoUrl
-    : film.videoUrl;
+  const rawVideoUrl = isPlayingTrailer && film.trailerUrl
+    ? film.trailerUrl
+    : (currentEpisode ? currentEpisode.videoUrl : film.videoUrl);
+
+  const currentVideoUrl = rawVideoUrl;
 
   // Resolve current video URL asynchronously if it's an indexeddb: or blob: link
   useEffect(() => {
@@ -952,6 +956,24 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar, initi
             <span className="text-[10px] text-white/40 font-mono tracking-wider">{film.duration.toUpperCase()}</span>
             <span className="text-white/10">•</span>
             <span className="text-[10px] text-white/40 font-mono tracking-wider">RELEASED {film.releaseYear}</span>
+
+            {/* Official Trailer Toggle Button */}
+            {film.trailerUrl && (
+              <>
+                <span className="text-white/10">•</span>
+                <button
+                  onClick={() => setIsPlayingTrailer(!isPlayingTrailer)}
+                  className={`text-[9px] font-mono font-bold uppercase tracking-widest px-2.5 py-1 rounded border transition-all flex items-center gap-1.5 cursor-pointer ${
+                    isPlayingTrailer 
+                      ? 'bg-amber-500 text-black border-amber-400 shadow-md animate-pulse' 
+                      : 'bg-amber-500/10 text-amber-400 border-amber-500/30 hover:bg-amber-500/20'
+                  }`}
+                >
+                  <Play className="h-3 w-3 fill-current" />
+                  <span>{isPlayingTrailer ? 'Watching Trailer (Click for Full Movie)' : 'Play Official Trailer'}</span>
+                </button>
+              </>
+            )}
           </div>
 
           <div>

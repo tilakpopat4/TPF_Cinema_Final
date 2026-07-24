@@ -1488,6 +1488,58 @@ export default function AdminPanel({
                   )}
                 </div>
 
+                {/* Trailer Video URL or Local Trailer Upload */}
+                <div className="flex flex-col gap-1.5 bg-amber-500/5 p-3 rounded-lg border border-amber-500/20">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-mono uppercase text-amber-400 font-bold flex items-center gap-1">
+                      <span>Official Trailer / Teaser Video (URL or Local File)</span>
+                    </label>
+                    <label className="cursor-pointer text-[9px] font-mono font-bold uppercase text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 px-2 py-1 rounded border border-amber-500/30 flex items-center gap-1 transition-all">
+                      <Upload className="h-3 w-3 text-amber-400" />
+                      <span>Upload Local Trailer</span>
+                      <input
+                        type="file"
+                        accept=".mp4,.mov,video/mp4,video/quicktime,video/*"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            try {
+                              const res = await saveMediaFile(file);
+                              setFilmForm(prev => ({ 
+                                ...prev, 
+                                trailerUrl: res.mediaKey 
+                              }));
+                            } catch (err) {
+                              console.error('Error saving trailer video:', err);
+                              setFilmForm(prev => ({ ...prev, trailerUrl: URL.createObjectURL(file) }));
+                            }
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+                  <input
+                    type="text"
+                    value={filmForm.trailerUrl || ''}
+                    onChange={(e) => setFilmForm({ ...filmForm, trailerUrl: e.target.value })}
+                    className="bg-black border border-white/10 p-2 rounded text-white text-xs focus:outline-none focus:border-amber-500/50 font-sans"
+                    placeholder="Trailer URL (YouTube/Vimeo/Drive/S3) or click 'Upload Local Trailer' above..."
+                  />
+                  {filmForm.trailerUrl && (
+                    <div className="text-[9px] font-mono text-amber-300 flex items-center justify-between bg-amber-500/10 px-2.5 py-1 rounded border border-amber-500/20 mt-0.5">
+                      <span className="truncate max-w-md">Trailer: {filmForm.trailerUrl}</span>
+                      <button
+                        type="button"
+                        onClick={() => setFilmForm({ ...filmForm, trailerUrl: '' })}
+                        className="text-white/40 hover:text-white underline text-[9px] shrink-0"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  )}
+                </div>
+
                 {/* Series Episode Management */}
                 {filmForm.type === 'series' && (
                   <div className="bg-[#0f0f13] border border-rose-500/30 rounded p-4 flex flex-col gap-3">
@@ -1821,7 +1873,35 @@ export default function AdminPanel({
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-mono uppercase text-white/50">Avatar Image URL (or Google Drive Link)</label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-mono uppercase text-amber-400 font-bold">
+                      Filmmaker DP / Avatar (Image URL or Local File)
+                    </label>
+                    <label className="cursor-pointer text-[9px] font-mono font-bold uppercase text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/30 flex items-center gap-1 transition-all">
+                      <Upload className="h-3 w-3 text-amber-400" />
+                      <span>Upload Local DP</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            try {
+                              const res = await saveMediaFile(file);
+                              setFilmmakerForm(prev => ({ 
+                                ...prev, 
+                                avatar: res.mediaKey 
+                              }));
+                            } catch (err) {
+                              console.error('Error saving local DP:', err);
+                              setFilmmakerForm(prev => ({ ...prev, avatar: URL.createObjectURL(file) }));
+                            }
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
                   <div className="flex items-center gap-2.5">
                     <img 
                       src={getDirectImageUrl(filmmakerForm.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&h=150&q=80')} 
@@ -1830,11 +1910,11 @@ export default function AdminPanel({
                       referrerPolicy="no-referrer"
                     />
                     <input
-                      type="url"
+                      type="text"
                       value={filmmakerForm.avatar || ''}
                       onChange={(e) => setFilmmakerForm({ ...filmmakerForm, avatar: e.target.value })}
-                      className="flex-1 bg-black border border-white/10 p-2 rounded text-white focus:outline-none focus:border-amber-500/50"
-                      placeholder="https://..."
+                      className="flex-1 bg-black border border-white/10 p-2 rounded text-white text-xs focus:outline-none focus:border-amber-500/50 font-sans"
+                      placeholder="https://... or click 'Upload Local DP'"
                     />
                   </div>
                 </div>

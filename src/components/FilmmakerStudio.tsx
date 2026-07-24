@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Film, Filmmaker, Tip } from '../types';
 import { getDirectImageUrl } from '../lib/driveUtils';
+import { saveMediaFile } from '../lib/mediaStorage';
 import SubmissionModal from './SubmissionModal';
 import CertificateModal from './CertificateModal';
 import { getContentId, getThumbnailContentId, generateScreeningCertificatePDF } from '../lib/certificateGenerator';
@@ -37,6 +38,7 @@ export default function FilmmakerStudio({
 
   // States for onboarding form
   const [name, setName] = useState(currentUser.displayName || '');
+  const [avatar, setAvatar] = useState(currentUser.photoURL || '');
   const [bio, setBio] = useState('');
   const [country, setCountry] = useState('India');
   const [role, setRole] = useState('Director / Screenwriter');
@@ -88,7 +90,7 @@ export default function FilmmakerStudio({
     try {
       await onRegisterFilmmaker({
         name: name.trim(),
-        avatar: currentUser.photoURL || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=200&h=200&q=80',
+        avatar: avatar.trim() || currentUser.photoURL || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=200&h=200&q=80',
         bio: bio.trim(),
         country: country.trim(),
         role: role.trim(),
@@ -147,6 +149,51 @@ export default function FilmmakerStudio({
               )}
 
               <form onSubmit={handleRegisterSubmit} className="flex flex-col gap-5 font-sans">
+                {/* Director DP / Avatar */}
+                <div className="flex flex-col gap-1.5 bg-white/5 p-4 rounded-lg border border-white/10">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-mono text-amber-400 uppercase tracking-widest font-bold">
+                      Profile Picture / Director DP (Local File or URL)
+                    </label>
+                    <label className="cursor-pointer text-[9px] font-mono font-bold uppercase text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 px-2.5 py-1 rounded border border-amber-500/30 flex items-center gap-1 transition-all">
+                      <Camera className="h-3 w-3 text-amber-400" />
+                      <span>Upload Local DP</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            try {
+                              const res = await saveMediaFile(file);
+                              setAvatar(res.mediaKey);
+                            } catch (err) {
+                              console.error('Error saving local DP:', err);
+                              setAvatar(URL.createObjectURL(file));
+                            }
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+                  <div className="flex items-center gap-3 mt-1">
+                    <img 
+                      src={getDirectImageUrl(avatar || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=200&h=200&q=80')} 
+                      alt="DP Preview" 
+                      className="w-12 h-12 object-cover rounded-full border-2 border-amber-500 bg-black shrink-0 shadow-lg"
+                      referrerPolicy="no-referrer"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Paste Image URL or click 'Upload Local DP' above"
+                      value={avatar}
+                      onChange={(e) => setAvatar(e.target.value)}
+                      className="flex-1 bg-black/50 border border-white/10 rounded px-3 py-2 text-xs focus:border-amber-500 focus:outline-none text-white placeholder-white/20"
+                    />
+                  </div>
+                </div>
+
                 {/* Director Name */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] font-mono text-white/50 uppercase tracking-widest">
