@@ -1101,6 +1101,15 @@ export default function App() {
 
                     {/* Content Section - takes 50% width on medium+ screens */}
                     <div className="relative z-20 w-full md:w-[50%] lg:w-[52%] flex flex-col gap-2.5 sm:gap-3 select-none pr-0 md:pr-4">
+                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        <span className="text-[8px] sm:text-[9px] font-mono font-bold uppercase tracking-widest bg-amber-500 text-black px-2 py-0.5 rounded shadow">
+                          CINEMATIC FEATURED
+                        </span>
+                        <span className="text-[8px] sm:text-[9px] font-mono font-bold uppercase tracking-widest bg-white/10 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20 backdrop-blur-sm">
+                          RECOMMENDED SCREENING
+                        </span>
+                      </div>
+
                       <h2 className="text-4xl sm:text-6xl md:text-7xl lg:text-7xl xl:text-8xl font-black tracking-tight text-[#F5F5F7] uppercase font-display leading-[0.95] drop-shadow-2xl my-1">
                         {featuredFilm.title}
                       </h2>
