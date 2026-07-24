@@ -63,6 +63,7 @@ service cloud.firestore {
         && film.reviews is list
         && (!film.keys().contains('cameraUsed') || (film.cameraUsed is string && film.cameraUsed.size() <= 128))
         && (!film.keys().contains('lensUsed') || (film.lensUsed is string && film.lensUsed.size() <= 128))
+        && (!film.keys().contains('trailerUrl') || (film.trailerUrl is string && film.trailerUrl.size() <= 1000))
         && (!film.keys().contains('filmmakerId') || (film.filmmakerId is string && film.filmmakerId.size() <= 128))
         && (!film.keys().contains('directorId') || (film.directorId is string && film.directorId.size() <= 128))
         && (!film.keys().contains('isFeatured') || (film.isFeatured is bool))

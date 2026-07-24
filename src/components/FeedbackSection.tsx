@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Star, MessageSquare, Plus, AlertCircle, Smile } from 'lucide-react';
 import { Film, Review } from '../types';
+import { sanitizeText, checkRateLimit, recordFailedAttempt } from '../lib/security';
 
 interface FeedbackSectionProps {
   film: Film;
@@ -50,19 +51,32 @@ export default function FeedbackSection({ film, onAddReview }: FeedbackSectionPr
 
   const handleSubmitReview = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!userName.trim()) {
-      setFormError('Please provide your name or a cinematic pseudonym.');
+
+    // Check rate limit (Max 3 reviews per minute)
+    const rl = checkRateLimit('add_review', 3, 60000, 120000);
+    if (!rl.allowed) {
+      setFormError(`Rate limit reached! Please wait ${rl.retryAfterSec}s before posting another review.`);
       return;
     }
-    if (!comment.trim() || comment.length < 10) {
+
+    const cleanName = sanitizeText(userName, 80);
+    const cleanComment = sanitizeText(comment, 1500);
+
+    if (!cleanName) {
+      setFormError('Please provide a valid name or cinematic pseudonym.');
+      return;
+    }
+    if (!cleanComment || cleanComment.length < 10) {
       setFormError('Please leave a helpful review comment (at least 10 characters).');
       return;
     }
 
+    recordFailedAttempt('add_review', 120000);
+
     onAddReview(film.id, {
-      userName: userName.trim(),
+      userName: cleanName,
       rating,
-      comment: comment.trim(),
+      comment: cleanComment,
       aspects: {
         storytelling,
         cinematography,

@@ -493,30 +493,6 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar, initi
             : 'w-full aspect-video border-white/10'
         } ${isLightsOff ? 'z-55 shadow-amber-500/5 ring-1 ring-amber-500/10' : ''}`}
       >
-        {/* Quality Indicator & Theater Badge Watermarks */}
-        <div className="absolute top-4 left-4 z-25 pointer-events-none flex flex-wrap items-center gap-2 transition-all">
-          <span className={`text-[10px] font-medium px-2.5 py-1 rounded-md border backdrop-blur-md shadow-sm transition-all ${
-            videoQuality === '4K' 
-              ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' 
-              : videoQuality === '360p'
-              ? 'bg-red-500/20 text-red-300 border-red-500/40'
-              : 'bg-black/70 text-white/80 border-white/10'
-          }`}>
-            {videoQuality === '4K' && '4K Ultra HD'}
-            {videoQuality === '1080p' && '1080p Full HD'}
-            {videoQuality === '720p' && '720p HD'}
-            {videoQuality === '360p' && '360p Data Saver'}
-            {videoQuality === 'Auto' && 'Auto'}
-          </span>
-
-          {theaterMode && (
-            <span className="text-[10px] font-medium px-2.5 py-1 rounded-md border border-amber-500/40 bg-amber-500/10 text-amber-300 backdrop-blur-md flex items-center gap-1.5">
-              <Tv className="w-3 h-3 text-amber-400" />
-              <span>Theater Mode</span>
-            </span>
-          )}
-        </div>
-
         {/* Video HTML5 Tag or Dynamic Embed Player */}
         {isEmbed ? (
           <iframe

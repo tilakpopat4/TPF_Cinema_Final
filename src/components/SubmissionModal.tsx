@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Film, Tv, Video, Image, DollarSign, Camera, HelpCircle, Sparkles, Check, Mail, Copy, ExternalLink, FileText, Plus, Trash2, Upload } from 'lucide-react';
 import { Film as FilmType } from '../types';
 import { saveMediaFile } from '../lib/mediaStorage';
+import { sanitizeText, sanitizeUrl } from '../lib/security';
 
 interface SubmissionModalProps {
   onClose: () => void;
@@ -197,27 +198,27 @@ Best Regards,
       }
     }
 
-    const posterUrl = customPosterUrl.trim() || POSTER_PRESETS[0].portraitUrl;
-    const landscapePosterUrl = customLandscapePosterUrl.trim() || POSTER_PRESETS[0].landscapeUrl;
-    const videoUrl = type === 'series' ? episodes[0].videoUrl.trim() : (customVideoUrl.trim() || VIDEO_PRESETS[0].url);
+    const posterUrl = sanitizeUrl(customPosterUrl.trim()) || POSTER_PRESETS[0].portraitUrl;
+    const landscapePosterUrl = sanitizeUrl(customLandscapePosterUrl.trim()) || POSTER_PRESETS[0].landscapeUrl;
+    const videoUrl = type === 'series' ? sanitizeUrl(episodes[0].videoUrl.trim()) : (sanitizeUrl(customVideoUrl.trim()) || VIDEO_PRESETS[0].url);
 
     onSubmit({
-      title: title.trim(),
+      title: sanitizeText(title, 200),
       type,
-      description: description.trim(),
-      duration: type === 'series' ? `${episodes.length} ${episodes.length === 1 ? 'Episode' : 'Episodes'}` : duration.trim(),
-      genre: selectedGenres,
-      director: director.trim(),
+      description: sanitizeText(description, 5000),
+      duration: type === 'series' ? `${episodes.length} ${episodes.length === 1 ? 'Episode' : 'Episodes'}` : sanitizeText(duration, 50),
+      genre: selectedGenres.map(g => sanitizeText(g, 50)),
+      director: sanitizeText(director, 100),
       releaseYear: new Date().getFullYear(),
       posterUrl,
       landscapePosterUrl,
       videoUrl,
-      trailerUrl: trailerUrl.trim() || undefined,
+      trailerUrl: trailerUrl.trim() ? sanitizeUrl(trailerUrl.trim()) : undefined,
       posterPositionY: portraitPan,
       landscapePosterPositionY: landscapePan,
-      episodes: type === 'series' ? episodes.map(ep => ({ ...ep, title: ep.title.trim(), duration: ep.duration.trim(), videoUrl: ep.videoUrl.trim() })) : undefined,
-      filmmakerId: `fm-${Math.random().toString(36).substr(2, 4)}`, // mock new id
-      upiId: upiId.trim() || undefined,
+      episodes: type === 'series' ? episodes.map(ep => ({ ...ep, title: sanitizeText(ep.title, 150), duration: sanitizeText(ep.duration, 50), videoUrl: sanitizeUrl(ep.videoUrl) })) : undefined,
+      filmmakerId: `fm-${Math.random().toString(36).substr(2, 4)}`,
+      upiId: upiId.trim() ? sanitizeText(upiId.trim(), 100) : undefined,
     });
 
     onClose();

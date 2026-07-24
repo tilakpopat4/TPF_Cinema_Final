@@ -113,6 +113,8 @@ export default function App() {
   // --- Real-time Firestore synchronization & Seeding ---
   useEffect(() => {
     if (!currentUser || currentUser.email !== 'tilakpopat2007@gmail.com') return;
+    if (localStorage.getItem('tpf_db_seeded_v1')) return;
+
     const seedDatabase = async () => {
       try {
         // Seed filmmakers
@@ -167,6 +169,8 @@ export default function App() {
             }
           }
         }
+
+        localStorage.setItem('tpf_db_seeded_v1', 'true');
       } catch (error) {
         console.error('Error seeding database:', error);
       }
@@ -922,16 +926,6 @@ export default function App() {
             <div className="flex flex-col gap-8">
               {/* Left/Middle: Custom Media Player + Info & Spec cards */}
               <div className="w-full flex flex-col gap-5">
-                
-                {/* Dynamic Watchlist Toggle indicator on Stage */}
-                <div className="flex items-center justify-between bg-white/[0.02] p-3 rounded border border-white/5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono tracking-widest text-white/50 uppercase">
-                      Cinema Screen • Now Showing: <span className="text-amber-500 font-bold">{activeFilm.title}</span>
-                    </span>
-                  </div>
-                </div>
-
                 {/* Advanced Interactive Player */}
                 <VideoPlayer 
                   film={activeFilm} 
