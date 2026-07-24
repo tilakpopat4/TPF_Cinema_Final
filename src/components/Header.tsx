@@ -42,7 +42,7 @@ export default function Header({
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full bg-[#1c1c1e]/95 backdrop-blur-md border-b border-white/10 px-3 sm:px-6 md:px-12 lg:px-16 py-2.5 sm:py-3.5">
+      <header className="sticky top-0 z-40 w-full bg-[#2B2B2B]/95 backdrop-blur-md border-b border-white/10 px-3 sm:px-6 md:px-12 lg:px-16 py-2.5 sm:py-3.5">
         <div className="w-full flex flex-col md:flex-row items-center justify-between gap-2.5 sm:gap-4">
           
           {/* Top Row on Mobile: Logo + Mobile Search Toggle + Profile */}

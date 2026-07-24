@@ -79,7 +79,7 @@ export default function IntroSplash({ onComplete }: IntroSplashProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#0a0a0c] flex flex-col items-center justify-center font-sans overflow-hidden select-none">
+    <div className="fixed inset-0 z-50 bg-[#2B2B2B] flex flex-col items-center justify-center font-sans overflow-hidden select-none">
       <AnimatePresence mode="wait">
         {isBuffering && (
           <motion.div
@@ -87,7 +87,7 @@ export default function IntroSplash({ onComplete }: IntroSplashProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-[#0a0a0c]/95"
+            className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-[#2B2B2B]/95"
           >
             {/* Cinematic Film Spinner */}
             <div className="relative mb-8">

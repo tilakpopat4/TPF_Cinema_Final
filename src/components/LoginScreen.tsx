@@ -32,12 +32,12 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#0e0e11] flex flex-col justify-center items-center font-sans px-4 py-12">
+    <div className="min-h-screen bg-[#2B2B2B] flex flex-col justify-center items-center font-sans px-4 py-12">
       {/* Main Card */}
-      <div className="w-full max-w-md bg-[#16161a] border border-zinc-800/80 rounded-2xl p-8 flex flex-col items-center shadow-xl">
+      <div className="w-full max-w-md bg-[#2B2B2B] border border-white/10 rounded-2xl p-8 flex flex-col items-center shadow-2xl">
         
         {/* Brand Logo */}
-        <div className="bg-white px-6 py-4 rounded-xl shadow-sm flex items-center justify-center mb-6">
+        <div className="bg-[#2B2B2B] border border-white/10 px-6 py-4 rounded-xl shadow-sm flex items-center justify-center mb-6">
           <img
             src="https://lh3.googleusercontent.com/d/1WnKEHu3WYNJ8JUgzVlq5Eouzdw9LRIwc"
             alt="TPF Cinemas"

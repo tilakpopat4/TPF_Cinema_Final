@@ -104,10 +104,10 @@ export default function FilmmakerStudio({
   };
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-[#F5F5F7] font-sans">
+    <div className="min-h-screen bg-[#2B2B2B] text-[#F5F5F7] font-sans">
       
       {/* Upper Navigation/Breadcrumb Banner */}
-      <div className="bg-[#121214] border-b border-white/5 py-4 px-6 md:px-12 flex items-center justify-between">
+      <div className="bg-[#2B2B2B] border-b border-white/10 py-4 px-6 md:px-12 flex items-center justify-between">
         <button
           onClick={onBackToHome}
           className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider text-white/50 hover:text-white transition-colors cursor-pointer"

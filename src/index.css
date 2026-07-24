@@ -33,12 +33,17 @@
 }
 
 body {
-  background-color: #2B2B2B; /* Dark charcoal */
+  background-color: #2B2B2B !important;
   color: #F5F5F7; /* Apple-style off-white */
   font-family: var(--font-sans);
   font-weight: 600; /* Default Montserrat Semibold weight */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+html, body, #root {
+  background-color: #2B2B2B !important;
+  min-height: 100vh;
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */

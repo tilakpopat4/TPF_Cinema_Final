@@ -796,7 +796,7 @@ export default function App() {
   // --- Auth Gate check ---
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-[#1c1c1e] flex flex-col justify-center items-center font-sans select-none">
+      <div className="min-h-screen bg-[#2B2B2B] flex flex-col justify-center items-center font-sans select-none">
         <div className="flex flex-col items-center gap-4">
           <svg className="animate-spin h-8 w-8 text-amber-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -844,7 +844,7 @@ export default function App() {
 
   if (viewState === 'filmmaker-studio') {
     return (
-      <div className="min-h-screen bg-[#09090b] text-[#F5F5F7] flex flex-col font-sans selection:bg-amber-500 selection:text-black">
+      <div className="min-h-screen bg-[#2B2B2B] text-[#F5F5F7] flex flex-col font-sans selection:bg-amber-500 selection:text-black">
         <FilmmakerStudio
           currentUser={currentUser}
           filmmakers={filmmakers}
@@ -1508,7 +1508,7 @@ export default function App() {
       )}
 
       {/* Minimal Footer */}
-      <footer className="mt-auto py-10 bg-black/95 border-t border-white/5 text-center text-xs text-white/40 font-sans tracking-wide">
+      <footer className="mt-auto py-10 bg-[#2B2B2B] border-t border-white/10 text-center text-xs text-white/40 font-sans tracking-wide">
         <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="text-white/60 font-bold tracking-wider text-sm">
             TPF CINEMAS | AN OTT FOR BEGINNERS
