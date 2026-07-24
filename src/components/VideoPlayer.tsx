@@ -491,24 +491,24 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar, initi
       >
         {/* Quality Indicator & Theater Badge Watermarks */}
         <div className="absolute top-4 left-4 z-25 pointer-events-none flex flex-wrap items-center gap-2 transition-all">
-          <span className={`text-[9px] sm:text-[10px] font-mono font-bold px-2.5 py-1 rounded-md border backdrop-blur-md shadow-lg transition-all ${
+          <span className={`text-[10px] font-medium px-2.5 py-1 rounded-md border backdrop-blur-md shadow-sm transition-all ${
             videoQuality === '4K' 
               ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' 
               : videoQuality === '360p'
               ? 'bg-red-500/20 text-red-300 border-red-500/40'
               : 'bg-black/70 text-white/80 border-white/10'
           }`}>
-            {videoQuality === '4K' && '4K ULTRA HD • 60 FPS'}
-            {videoQuality === '1080p' && '1080p FULL HD'}
-            {videoQuality === '720p' && '720p HD STREAM'}
-            {videoQuality === '360p' && '360p DATA SAVER'}
-            {videoQuality === 'Auto' && 'AUTO ADAPTIVE STREAM'}
+            {videoQuality === '4K' && '4K Ultra HD'}
+            {videoQuality === '1080p' && '1080p Full HD'}
+            {videoQuality === '720p' && '720p HD'}
+            {videoQuality === '360p' && '360p Data Saver'}
+            {videoQuality === 'Auto' && 'Auto'}
           </span>
 
           {theaterMode && (
-            <span className="text-[9px] sm:text-[10px] font-mono font-bold px-2.5 py-1 rounded-md border border-amber-500/50 bg-amber-500/20 text-amber-300 backdrop-blur-md shadow-lg flex items-center gap-1.5 animate-pulse">
+            <span className="text-[10px] font-medium px-2.5 py-1 rounded-md border border-amber-500/40 bg-amber-500/10 text-amber-300 backdrop-blur-md flex items-center gap-1.5">
               <Tv className="w-3 h-3 text-amber-400" />
-              <span>THEATER MODE (21:9 WIDESCREEN)</span>
+              <span>Theater Mode</span>
             </span>
           )}
         </div>
@@ -628,21 +628,21 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar, initi
             </h2>
 
             {/* Metadata Row: Year, Rating, Duration */}
-            <div className="flex flex-wrap items-center gap-3 sm:gap-5 text-xs sm:text-sm font-semibold text-white/90 font-sans pt-1">
-              <span className="text-white font-bold">{film.releaseYear || '2026'}</span>
-              <span className="px-1.5 py-0.5 border border-white/40 text-[10px] sm:text-xs rounded font-mono font-bold uppercase tracking-wider text-white">
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm font-medium text-white/90 font-sans pt-1">
+              <span className="text-white font-semibold">{film.releaseYear || '2026'}</span>
+              <span className="px-1.5 py-0.5 border border-white/30 text-[10px] sm:text-xs rounded font-medium text-white">
                 {film.ageRating || 'U/A 16+'}
               </span>
-              <span className="text-white/90">{film.duration || '3h 14m'}</span>
+              <span className="text-white/80">{film.duration || '3h 14m'}</span>
               {film.type === 'series' && (
-                <span className="px-2 py-0.5 bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] sm:text-xs rounded font-bold uppercase">
-                  Web Series
+                <span className="px-2 py-0.5 bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] sm:text-xs rounded font-medium">
+                  Series
                 </span>
               )}
             </div>
 
             {/* Description */}
-            <p className="text-xs sm:text-sm md:text-base text-white/80 font-sans leading-relaxed max-w-xl line-clamp-3 pt-2 drop-shadow-sm">
+            <p className="text-xs sm:text-sm md:text-base text-white/80 font-sans leading-relaxed max-w-xl line-clamp-3 pt-2">
               {film.description}
             </p>
 
@@ -655,13 +655,13 @@ export default function VideoPlayer({ film, onLike, isLiked, onOpenTipJar, initi
                   e.stopPropagation();
                   togglePlay();
                 }}
-                className="flex items-center gap-2.5 px-5 sm:px-6 py-2.5 sm:py-3 bg-red-600 hover:bg-red-500 text-white rounded-md text-xs sm:text-sm font-extrabold uppercase tracking-wider transition-all cursor-pointer shadow-2xl active:scale-95"
+                className="flex items-center gap-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-black rounded-lg text-xs font-semibold transition-all cursor-pointer shadow-md active:scale-95"
               >
                 <Play className="h-4 w-4 fill-current" />
-                <span>Resume Playback</span>
+                <span>Resume</span>
               </button>
               <span className="text-xs text-white/50 font-sans hidden sm:inline">
-                Click anywhere on screen to play
+                Click anywhere to resume
               </span>
             </div>
           </div>
