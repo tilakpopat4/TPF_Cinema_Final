@@ -8,7 +8,6 @@ import FeedbackSection from './components/FeedbackSection';
 import SubmissionModal from './components/SubmissionModal';
 import AboutManifesto from './components/AboutManifesto';
 import TipJarModal from './components/TipJarModal';
-import FilmmakerSpotlight from './components/FilmmakerSpotlight';
 import FilmCard from './components/FilmCard';
 import UpcomingMovies from './components/UpcomingMovies';
 import AdminPanel from './components/AdminPanel';
@@ -213,9 +212,8 @@ export default function App() {
     loadCachedMedia();
   }, []);
 
-  // Subscribe to Films real-time
+  // Subscribe to Films real-time (Public for all users)
   useEffect(() => {
-    if (!currentUser) return;
     const unsubscribe = onSnapshot(collection(db, 'films'), async (snapshot) => {
       const loadedFilms: Film[] = [];
       snapshot.forEach((doc) => {
@@ -229,11 +227,10 @@ export default function App() {
       handleFirestoreError(error, OperationType.LIST, 'films');
     });
     return () => unsubscribe();
-  }, [currentUser]);
+  }, []);
 
-  // Subscribe to Filmmakers real-time
+  // Subscribe to Filmmakers real-time (Public for all users)
   useEffect(() => {
-    if (!currentUser) return;
     const unsubscribe = onSnapshot(collection(db, 'filmmakers'), async (snapshot) => {
       const loadedFilmmakers: Filmmaker[] = [];
       snapshot.forEach((doc) => {
@@ -247,11 +244,10 @@ export default function App() {
       handleFirestoreError(error, OperationType.LIST, 'filmmakers');
     });
     return () => unsubscribe();
-  }, [currentUser]);
+  }, []);
 
-  // Subscribe to Upcoming Films real-time
+  // Subscribe to Upcoming Films real-time (Public for all users)
   useEffect(() => {
-    if (!currentUser) return;
     const unsubscribe = onSnapshot(collection(db, 'upcoming_films'), async (snapshot) => {
       const loadedUpcoming: UpcomingFilm[] = [];
       snapshot.forEach((doc) => {
@@ -265,11 +261,10 @@ export default function App() {
       handleFirestoreError(error, OperationType.LIST, 'upcoming_films');
     });
     return () => unsubscribe();
-  }, [currentUser]);
+  }, []);
 
-  // Subscribe to Tips real-time
+  // Subscribe to Tips real-time (Public for all users)
   useEffect(() => {
-    if (!currentUser) return;
     const unsubscribe = onSnapshot(collection(db, 'tips'), (snapshot) => {
       const loadedTips: Tip[] = [];
       snapshot.forEach((doc) => {
@@ -281,7 +276,7 @@ export default function App() {
       handleFirestoreError(error, OperationType.LIST, 'tips');
     });
     return () => unsubscribe();
-  }, [currentUser]);
+  }, []);
 
   // Handle URL change routing and direct Content ID lookup
   useEffect(() => {
@@ -1111,7 +1106,7 @@ export default function App() {
                           CINEMATIC FEATURED
                         </span>
                         <span className="text-[8px] sm:text-[9px] font-mono font-bold uppercase tracking-widest bg-white/10 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20 backdrop-blur-sm">
-                          ★ RECOMMENDED SCREENING
+                          RECOMMENDED SCREENING
                         </span>
                       </div>
 
@@ -1190,64 +1185,24 @@ export default function App() {
                           <span>Sponsor</span>
                         </button>
                       </div>
-
-                      {/* Featured Series Listed Episode Options */}
-                      {featuredFilm.type === 'series' && (
-                        <div className="flex flex-col gap-1.5 mt-1 pt-2 border-t border-white/10 w-full">
-                          <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-amber-400 flex items-center gap-1.5">
-                            <Tv className="h-3 w-3" /> Select Episode To Play:
-                          </span>
-                          <div className="flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden py-1 w-full">
-                            {(featuredFilm.episodes && featuredFilm.episodes.length > 0 
-                              ? featuredFilm.episodes 
-                              : [{ id: `${featuredFilm.id}-ep1`, title: 'Episode 1', duration: featuredFilm.duration || '10m', videoUrl: featuredFilm.videoUrl }]
-                            ).map((ep, idx) => (
-                              <button
-                                key={ep.id || idx}
-                                type="button"
-                                onClick={() => handleSelectFilm(featuredFilm, idx)}
-                                className="px-3 py-1.5 bg-black/80 hover:bg-amber-500 hover:text-black border border-white/20 hover:border-amber-400 text-white rounded text-[10px] font-mono font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 shadow"
-                              >
-                                <Play className="h-2.5 w-2.5 fill-current" />
-                                <span>Ep {idx + 1}: {ep.title}</span>
-                                <span className="opacity-60 text-[9px]">({ep.duration})</span>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
                     </div>
                   </div>
                 )}
 
-                {/* 0. CONTINUE WATCHING SECTION (Last 5 viewed films) */}
+                {/* CONTINUE WATCHING SECTION */}
                 {continueWatchingFilms.length > 0 && (
-                  <div className="flex flex-col gap-3.5 bg-white/[0.02] border border-amber-500/20 p-4 sm:p-5 rounded-xl backdrop-blur-sm relative overflow-hidden shadow-xl">
-                    {/* Ambient subtle glow background */}
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/[0.03] rounded-full blur-3xl pointer-events-none" />
-
-                    <div className="flex items-center justify-between border-b border-white/10 pb-3 z-10">
-                      <div className="flex items-center gap-2.5">
-                        <div className="h-7 w-7 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center">
-                          <RotateCcw className="h-3.5 w-3.5" />
-                        </div>
-                        <div>
-                          <h3 className="text-xs font-mono font-bold tracking-widest uppercase text-[#F5F5F7] flex items-center gap-2">
-                            CONTINUE WATCHING
-                          </h3>
-                          <p className="text-[9px] font-mono text-white/40 uppercase tracking-tight">
-                            RESUME YOUR RECENTLY VIEWED SCREENINGS ({continueWatchingFilms.length}/5)
-                          </p>
-                        </div>
-                      </div>
-
-                      <span className="text-[9px] font-mono text-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-full uppercase tracking-wider hidden sm:inline-block">
-                        ★ QUICK RESUME
+                  <div className="flex flex-col gap-3 bg-[#121215] border border-zinc-800/80 p-4 sm:p-5 rounded-2xl shadow-sm">
+                    <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-100">
+                        Continue Watching
+                      </h3>
+                      <span className="text-xs text-zinc-400 font-mono">
+                        {continueWatchingFilms.length} items
                       </span>
                     </div>
 
-                    {/* Row / Grid of Continue Watching Cards */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3.5 sm:gap-4 pt-1 z-10">
+                    {/* Cards */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3.5 pt-1">
                       {continueWatchingFilms.map(({ film, episodeIndex }) => {
                         const activeEp = film.episodes && film.episodes[episodeIndex] ? film.episodes[episodeIndex] : null;
                         const poster = film.landscapePosterUrl || film.posterUrl;
@@ -1256,14 +1211,13 @@ export default function App() {
                           <div
                             key={film.id}
                             onClick={() => handleSelectFilm(film, episodeIndex)}
-                            className="group cursor-pointer relative rounded-lg overflow-hidden bg-black/60 border border-white/10 hover:border-amber-500/60 transition-all duration-300 shadow-lg flex flex-col justify-between"
+                            className="group cursor-pointer relative rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800 hover:border-amber-500/50 transition-all duration-200 shadow-sm flex flex-col justify-between"
                           >
-                            {/* Card Thumbnail Area */}
-                            <div className="relative aspect-[16/10] w-full overflow-hidden bg-zinc-900">
+                            <div className="relative aspect-[16/10] w-full overflow-hidden bg-zinc-950">
                               <img
                                 src={getDirectImageUrl(poster)}
                                 alt={film.title}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-85 group-hover:opacity-100"
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-90 group-hover:opacity-100"
                                 style={{
                                   objectPosition: `center ${
                                     film.landscapePosterUrl
@@ -1274,50 +1228,41 @@ export default function App() {
                                 referrerPolicy="no-referrer"
                               />
 
-                              {/* Dark Gradient Overlay */}
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
-
-                              {/* Remove item button */}
                               <button
                                 type="button"
                                 onClick={(e) => handleRemoveFromContinueWatching(film.id, e)}
                                 title="Remove from Continue Watching"
-                                className="absolute top-1.5 right-1.5 h-6 w-6 rounded-full bg-black/70 hover:bg-rose-500 text-white/70 hover:text-white flex items-center justify-center border border-white/10 transition-all opacity-0 group-hover:opacity-100 z-20"
+                                className="absolute top-1.5 right-1.5 h-6 w-6 rounded-full bg-black/70 hover:bg-rose-500 text-zinc-300 hover:text-white flex items-center justify-center border border-white/10 transition-all opacity-0 group-hover:opacity-100 z-20"
                               >
                                 <X className="h-3 w-3" />
                               </button>
 
-                              {/* Type / Episode Badge */}
                               <div className="absolute top-1.5 left-1.5 z-10">
-                                <span className="text-[8px] font-mono font-bold bg-black/80 text-amber-400 border border-amber-500/30 px-1.5 py-0.5 rounded uppercase tracking-wider backdrop-blur-sm">
+                                <span className="text-[9px] font-medium bg-black/80 text-amber-400 border border-white/10 px-1.5 py-0.5 rounded backdrop-blur-md">
                                   {film.type === 'series'
                                     ? (activeEp ? `Ep ${episodeIndex + 1}` : 'Series')
                                     : 'Film'}
                                 </span>
                               </div>
 
-                              {/* Play Icon Circle Overlay */}
                               <div className="absolute inset-0 flex items-center justify-center z-10">
-                                <div className="h-9 w-9 rounded-full bg-amber-500/90 text-black flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform">
-                                  <Play className="h-4 w-4 fill-current ml-0.5" />
+                                <div className="h-8 w-8 rounded-full bg-amber-500 text-zinc-950 flex items-center justify-center shadow-md transform group-hover:scale-105 transition-transform">
+                                  <Play className="h-3.5 w-3.5 fill-current ml-0.5" />
                                 </div>
                               </div>
 
-                              {/* Progress bar simulation at bottom of thumbnail */}
                               <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
                                 <div className="h-full bg-amber-400 w-2/3 rounded-r" />
                               </div>
                             </div>
 
-                            {/* Title & Info Bar */}
-                            <div className="p-2.5 flex flex-col justify-between gap-1 bg-[#161618]">
-                              <p className="text-xs font-extrabold text-[#F5F5F7] truncate font-sans group-hover:text-amber-300 transition-colors">
+                            <div className="p-2.5 flex flex-col gap-0.5 bg-[#16161a]">
+                              <p className="text-xs font-semibold text-zinc-200 truncate group-hover:text-amber-400 transition-colors">
                                 {film.title}
                               </p>
-                              <div className="flex items-center justify-between text-[9px] font-mono text-white/50">
-                                <span className="truncate">By {film.director}</span>
-                                <span className="text-amber-400 font-bold shrink-0 ml-1">RESUME</span>
-                              </div>
+                              <p className="text-[10px] text-zinc-400 truncate">
+                                {film.director}
+                              </p>
                             </div>
                           </div>
                         );
@@ -1326,26 +1271,23 @@ export default function App() {
                   </div>
                 )}
 
-                {/* B. AUDIENCE PERSONAL WATCHLIST (Row 1 - If exists) */}
+                {/* AUDIENCE PERSONAL WATCHLIST */}
                 {watchlistFilms.length > 0 && (
-                  <div className="flex flex-col gap-3 bg-[#0c0c0e]/30 p-5 rounded border border-white/5">
-                    <div className="flex items-center justify-between border-b border-white/5 pb-2">
-                      <div className="flex items-center gap-2">
-                        <Bookmark className="h-4 w-4 text-amber-500" />
-                        <h3 className="text-xs font-mono font-bold tracking-widest uppercase text-white/90">MY RESERVED PLAYLIST</h3>
-                      </div>
-                      <span className="text-[9px] font-mono text-white/40 tracking-widest uppercase">
-                        {watchlistFilms.length} SAVED LISTINGS
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2">
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-200">My Saved List</h3>
+                      <span className="text-xs text-zinc-500 font-mono">
+                        {watchlistFilms.length} items
                       </span>
                     </div>
 
                     <div className="relative group/row">
-                      <div className="flex gap-5 overflow-x-auto pb-2 pt-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden scroll-smooth">
+                      <div className="flex gap-4 overflow-x-auto pb-2 pt-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden scroll-smooth">
                         {watchlistFilms.map((film) => (
                           <div 
                             key={film.id}
                             onClick={() => handleSelectFilm(film)}
-                            className="min-w-[150px] sm:min-w-[180px] w-[150px] sm:w-[180px] shrink-0 group cursor-pointer relative rounded overflow-hidden aspect-[2/3] border border-white/10 hover:border-amber-500/40 transition-all shadow-sm"
+                            className="min-w-[140px] sm:min-w-[170px] w-[140px] sm:w-[170px] shrink-0 group cursor-pointer relative rounded-xl overflow-hidden aspect-[2/3] border border-zinc-800 hover:border-zinc-700 transition-all shadow-sm"
                           >
                             <img 
                               src={getDirectImageUrl(film.posterUrl)} 
@@ -1354,9 +1296,9 @@ export default function App() {
                               style={{ objectPosition: `center ${film.posterPositionY ?? 50}%` }}
                               referrerPolicy="no-referrer"
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent flex flex-col justify-end p-2.5 opacity-90">
-                              <p className="text-[10px] font-bold text-[#F5F5F7] truncate">{film.title}</p>
-                              <p className="text-[8px] text-white/40 font-mono">By {film.director}</p>
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent flex flex-col justify-end p-2.5">
+                              <p className="text-xs font-semibold text-zinc-100 truncate">{film.title}</p>
+                              <p className="text-[10px] text-zinc-400 truncate">{film.director}</p>
                             </div>
                           </div>
                         ))}
@@ -1365,20 +1307,16 @@ export default function App() {
                   </div>
                 )}
 
-                {/* C. CURATED ROW 1: TRENDING NOW */}
+                {/* CURATED ROW 1: TRENDING TODAY */}
                 <div className="flex flex-col gap-3">
-                  <div className="flex items-center justify-between border-b border-white/5 pb-2">
-                    <div className="flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4 text-amber-500" />
-                      <h3 className="text-xs font-mono font-bold tracking-widest uppercase text-white/95">TRENDING TODAY</h3>
-                    </div>
-                    <span className="text-[8px] font-mono text-white/40 uppercase tracking-widest">ORGANIC REACH</span>
+                  <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-200">Trending Today</h3>
                   </div>
 
                   <div className="relative group/row">
-                    <div className="flex gap-5 overflow-x-auto pb-4 pt-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden scroll-smooth">
+                    <div className="flex gap-4 overflow-x-auto pb-4 pt-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden scroll-smooth">
                       {trendingFilms.map((film) => (
-                        <div key={film.id} className="min-w-[190px] sm:min-w-[220px] w-[190px] sm:w-[220px] shrink-0">
+                        <div key={film.id} className="min-w-[180px] sm:min-w-[210px] w-[180px] sm:w-[210px] shrink-0">
                           <FilmCard 
                             film={film} 
                             onClick={() => handleSelectFilm(film)} 
@@ -1391,20 +1329,16 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* D. CURATED ROW 2: HIGHLY RATED & AWARD WINNERS */}
+                {/* CURATED ROW 2: CRITICALLY ACCLAIMED */}
                 <div className="flex flex-col gap-3">
-                  <div className="flex items-center justify-between border-b border-white/5 pb-2">
-                    <div className="flex items-center gap-2">
-                      <Star className="h-4 w-4 text-amber-500" />
-                      <h3 className="text-xs font-mono font-bold tracking-widest uppercase text-white/95">CRITICALLY ACCLAIMED</h3>
-                    </div>
-                    <span className="text-[8px] font-mono text-white/40 uppercase tracking-widest">HIGHEST RATING</span>
+                  <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-200">Critically Acclaimed</h3>
                   </div>
 
                   <div className="relative group/row">
-                    <div className="flex gap-5 overflow-x-auto pb-4 pt-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden scroll-smooth">
+                    <div className="flex gap-4 overflow-x-auto pb-4 pt-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden scroll-smooth">
                       {topRatedFilms.map((film) => (
-                        <div key={film.id} className="min-w-[190px] sm:min-w-[220px] w-[190px] sm:w-[220px] shrink-0">
+                        <div key={film.id} className="min-w-[180px] sm:min-w-[210px] w-[180px] sm:w-[210px] shrink-0">
                           <FilmCard 
                             film={film} 
                             onClick={() => handleSelectFilm(film)} 
@@ -1417,21 +1351,17 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* E. CURATED ROW 3: GUERILLA CINEMA MASTERPIECES */}
+                {/* CURATED ROW 3: GUERILLA INDIE GEMS */}
                 {guerillaFilms.length > 0 && (
                   <div className="flex flex-col gap-3">
-                    <div className="flex items-center justify-between border-b border-white/5 pb-2">
-                      <div className="flex items-center gap-2">
-                        <Camera className="h-4 w-4 text-amber-500" />
-                        <h3 className="text-xs font-mono font-bold tracking-widest uppercase text-white/95">GUERILLA INDIE GEMS</h3>
-                      </div>
-                      <span className="text-[8px] font-mono text-white/40 uppercase tracking-widest">ZERO BARRIERS</span>
+                    <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2">
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-200">Guerilla Indie Gems</h3>
                     </div>
 
                     <div className="relative group/row">
-                      <div className="flex gap-5 overflow-x-auto pb-4 pt-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden scroll-smooth">
+                      <div className="flex gap-4 overflow-x-auto pb-4 pt-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden scroll-smooth">
                         {guerillaFilms.map((film) => (
-                          <div key={film.id} className="min-w-[190px] sm:min-w-[220px] w-[190px] sm:w-[220px] shrink-0">
+                          <div key={film.id} className="min-w-[180px] sm:min-w-[210px] w-[180px] sm:w-[210px] shrink-0">
                             <FilmCard 
                               film={film} 
                               onClick={() => handleSelectFilm(film)} 
@@ -1448,12 +1378,8 @@ export default function App() {
                 {/* F. CURATED ROW 4: SERIES & INDIE DOCUMENTARIES */}
                 {seriesAndDocs.length > 0 && (
                   <div className="flex flex-col gap-3">
-                    <div className="flex items-center justify-between border-b border-white/5 pb-2">
-                      <div className="flex items-center gap-2">
-                        <Tv className="h-4 w-4 text-amber-500" />
-                        <h3 className="text-xs font-mono font-bold tracking-widest uppercase text-white/95">INDIE SERIALS & DOCUMENTARIES</h3>
-                      </div>
-                      <span className="text-[8px] font-mono text-white/40 uppercase tracking-widest">DEEPER DIALOGUES</span>
+                    <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2">
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-200">Indie Serials & Documentaries</h3>
                     </div>
 
                     <div className="relative group/row">
@@ -1473,71 +1399,72 @@ export default function App() {
                   </div>
                 )}
 
+
                 {/* Upcoming Releases and Announcements Section */}
                 <UpcomingMovies upcomingList={upcomingFilms} />
 
-                {/* G. INTERACTIVE BENTO SPOTLIGHT & PHILOSOPHY SECTIONS */}
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-stretch mt-4">
-                  
-                  {/* Filmmaker of the week Spotlight */}
-                  <div className="lg:col-span-1 h-full flex flex-col">
-                    <FilmmakerSpotlight 
-                      filmmakers={filmmakers}
-                      films={films}
-                      onSelectFilm={handleSelectFilm}
-                      activeFilmId={activeFilm ? activeFilm.id : ''}
-                    />
-                  </div>
-
-                  {/* Ethics and platform manifesto container */}
-                  <div className="lg:col-span-3 bg-[#0c0c0e] p-6 md:p-8 rounded border border-white/5 flex flex-col justify-between gap-6 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/[0.03] rounded-full blur-3xl pointer-events-none" />
+                {/* G. PHILOSOPHY & MANIFESTO SECTION */}
+                <div className="mt-8">
+                  {/* Platform Mission Container */}
+                  <div className="bg-[#0e0e11] p-6 md:p-8 rounded-2xl border border-white/10 shadow-xl flex flex-col justify-between gap-6">
                     
                     <div className="flex flex-col gap-3">
-                      <div className="flex items-center gap-2">
-                        <Sparkles className="h-4 w-4 text-amber-500 animate-pulse" />
-                        <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-500">
-                          PLATFORM GUIDING PROTOCOLS
+                      <div>
+                        <span className="text-xs font-mono font-semibold uppercase tracking-widest text-amber-400 block mb-1">
+                          OUR MISSION
                         </span>
+                        <h3 className="text-xl md:text-2xl font-bold tracking-tight text-white">
+                          Built for Independent Storytellers
+                        </h3>
                       </div>
 
-                      <h3 className="text-base sm:text-lg font-bold tracking-tight text-[#F5F5F7] uppercase font-display">
-                        A cinematic universe designed entirely for independent storytellers.
-                      </h3>
-
-                      <p className="text-xs text-white/50 leading-relaxed font-sans">
-                        IndieScreen operates without algorithmic lockouts, corporate tier pricing, or developer platform listing fee structures. We believe high-quality, creative cinematic expression should be 100% open and accessible to the public, backed by constructive viewer ratings, spec analysis, and fully distributed filmmaker micro-sponsorship.
+                      <p className="text-sm text-zinc-300 leading-relaxed max-w-3xl">
+                        TPF Cinemas provides an open streaming platform for emerging filmmakers, short cinema creators, and web series directors. We believe high-quality, creative cinematic expression should be freely accessible to audiences without paywalls or algorithmic gatekeeping.
                       </p>
 
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2 pt-4 border-t border-white/5 text-[11px] text-white/40">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4 pt-6 border-t border-white/10">
                         <div>
-                          <span className="text-[10px] font-mono font-bold text-amber-500 uppercase block mb-1">1. ZERO SCREENING FEES</span>
-                          Upload your short films or web series directly. No subscriptions or audience gatekeepers.
+                          <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" /> Direct Submissions
+                          </h4>
+                          <p className="text-xs text-zinc-400 leading-relaxed">
+                            Upload short films or series directly to connect with film enthusiasts worldwide.
+                          </p>
                         </div>
                         <div>
-                          <span className="text-[10px] font-mono font-bold text-amber-500 uppercase block mb-1">2. SPECIFIC RATING ANALYTICS</span>
-                          Get constructive technical feedback on storyboards, audio engineering, and framing.
+                          <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" /> Community Reviews
+                          </h4>
+                          <p className="text-xs text-zinc-400 leading-relaxed">
+                            Receive genuine audience reviews, ratings, and constructive technical feedback.
+                          </p>
                         </div>
                         <div>
-                          <span className="text-[10px] font-mono font-bold text-amber-500 uppercase block mb-1">3. DIRECT CROUDFUNDING</span>
-                          Sponsor lens acquisitions, movie equipment, and local screening submissions.
+                          <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" /> Filmmaker Support
+                          </h4>
+                          <p className="text-xs text-zinc-400 leading-relaxed">
+                            Enable direct audience tipping and sponsorship to help fund your next production.
+                          </p>
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-white/5">
+                    <div className="flex flex-wrap items-center gap-3 mt-2 pt-4 border-t border-white/10">
                       <button
+                        type="button"
                         onClick={() => setShowSubmission(true)}
-                        className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-black rounded text-xs font-bold transition-all cursor-pointer uppercase tracking-widest"
+                        className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-black rounded-lg text-xs font-bold transition-all cursor-pointer shadow-sm"
                       >
-                        Screen Your Work Now
+                        Submit Your Film
                       </button>
 
                       <button
+                        type="button"
                         onClick={() => setShowManifesto(true)}
-                        className="px-5 py-2.5 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded text-xs font-bold transition-all cursor-pointer uppercase tracking-widest"
+                        className="px-5 py-2.5 bg-white/10 hover:bg-white/15 text-white border border-white/10 rounded-lg text-xs font-semibold transition-all cursor-pointer"
                       >
-                        Read manifesto
+                        Read Full Manifesto
                       </button>
                     </div>
                   </div>

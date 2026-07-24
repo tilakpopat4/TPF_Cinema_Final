@@ -181,32 +181,32 @@ export default function AdminPanel({
   const [cloudDirectorySearch, setCloudDirectorySearch] = useState('');
 
   function getCloudStorageProvider(url?: string) {
-    if (!url) return { provider: 'Empty / Unspecified', color: 'text-white/40', bg: 'bg-white/5', border: 'border-white/10', icon: '❓' };
+    if (!url) return { provider: 'Empty / Unspecified', color: 'text-white/40', bg: 'bg-white/5', border: 'border-white/10', icon: '' };
     if (url.startsWith('indexeddb:')) {
-      return { provider: 'IndexedDB Media Vault (Browser Store)', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', icon: '💾' };
+      return { provider: 'IndexedDB Media Vault (Browser Store)', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', icon: '' };
     }
     if (url.startsWith('data:')) {
-      return { provider: 'Base64 Data Stream (Firestore Doc Inline)', color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20', icon: '⚡' };
+      return { provider: 'Base64 Data Stream (Firestore Doc Inline)', color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20', icon: '' };
     }
     if (url.includes('file.garden')) {
-      return { provider: 'File Garden CDN (TPF Cinemas Vault)', color: 'text-emerald-300', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', icon: '🪴' };
+      return { provider: 'File Garden CDN (TPF Cinemas Vault)', color: 'text-emerald-300', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', icon: '' };
     }
     if (url.includes('commondatastorage.googleapis.com') || url.includes('storage.googleapis.com')) {
-      return { provider: 'Google Cloud Storage CDN (Multi-Region Bucket)', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20', icon: '☁️' };
+      return { provider: 'Google Cloud Storage CDN (Multi-Region Bucket)', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20', icon: '' };
     }
     if (url.includes('youtube.com') || url.includes('youtu.be')) {
-      return { provider: 'YouTube Video Pipeline Stream', color: 'text-rose-400', bg: 'bg-rose-500/10', border: 'border-rose-500/20', icon: '▶️' };
+      return { provider: 'YouTube Video Pipeline Stream', color: 'text-rose-400', bg: 'bg-rose-500/10', border: 'border-rose-500/20', icon: '' };
     }
     if (url.includes('drive.google.com')) {
-      return { provider: 'Google Drive Stream Proxy', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20', icon: '📁' };
+      return { provider: 'Google Drive Stream Proxy', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20', icon: '' };
     }
     if (url.includes('unsplash.com')) {
-      return { provider: 'Unsplash Global Image CDN', color: 'text-sky-400', bg: 'bg-sky-500/10', border: 'border-sky-500/20', icon: '🖼️' };
+      return { provider: 'Unsplash Global Image CDN', color: 'text-sky-400', bg: 'bg-sky-500/10', border: 'border-sky-500/20', icon: '' };
     }
     if (url.startsWith('http://') || url.startsWith('https://')) {
-      return { provider: 'Direct Cloud CDN / Object Storage (S3 / R2)', color: 'text-amber-300', bg: 'bg-amber-500/10', border: 'border-amber-500/20', icon: '🌐' };
+      return { provider: 'Direct Cloud CDN / Object Storage (S3 / R2)', color: 'text-amber-300', bg: 'bg-amber-500/10', border: 'border-amber-500/20', icon: '' };
     }
-    return { provider: 'Custom Media Stream Link', color: 'text-white/80', bg: 'bg-white/5', border: 'border-white/10', icon: '🔗' };
+    return { provider: 'Custom Media Stream Link', color: 'text-white/80', bg: 'bg-white/5', border: 'border-white/10', icon: '' };
   }
 
   const handleSetSpotlightFilmmaker = (fmId: string) => {
@@ -1145,7 +1145,7 @@ export default function AdminPanel({
                     </div>
                     
                     {/* Tab Buttons */}
-                    <div className="flex items-center bg-white/5 p-1 rounded-lg border border-white/5">
+                    <div className="flex items-center bg-white/5 p-1 rounded-lg border border-white/5 gap-1">
                       <button
                         type="button"
                         onClick={() => setPosterTab('portrait')}
@@ -1155,7 +1155,7 @@ export default function AdminPanel({
                             : 'text-white/60 hover:text-white'
                         }`}
                       >
-                        PORTRAIT (2:3)
+                        OPTION 1: MAIN THUMBNAIL (2:3)
                       </button>
                       <button
                         type="button"
@@ -1166,7 +1166,7 @@ export default function AdminPanel({
                             : 'text-white/60 hover:text-white'
                         }`}
                       >
-                        LANDSCAPE (16:9)
+                        OPTION 2: FEATURED POSTER (16:9)
                       </button>
                     </div>
                   </div>
@@ -2071,8 +2071,8 @@ export default function AdminPanel({
                         </td>
                         <td className="py-3 px-2">
                           <div className="flex flex-col text-[10px] font-mono">
-                            <span className="text-amber-500 font-bold">♥ {f.likes} likes</span>
-                            <span className="text-white/40">👁 {f.views} views</span>
+                            <span className="text-amber-500 font-bold">{f.likes} likes</span>
+                            <span className="text-white/40">{f.views} views</span>
                             <span className="text-[#38bdf8] font-bold">₹ {f.fundsReceived || 0} raised</span>
                           </div>
                         </td>
@@ -2225,7 +2225,7 @@ export default function AdminPanel({
                               <div className="flex items-center gap-2 mt-1 text-[9px] font-mono">
                                 {fm.upiId ? (
                                   <span className="text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
-                                    ⚡ {fm.upiId}
+                                    {fm.upiId}
                                   </span>
                                 ) : (
                                   <span className="text-white/30">No UPI ID</span>
@@ -3873,7 +3873,7 @@ export default function AdminPanel({
                               film.isFeatured ? 'bg-amber-500 text-black' : 'bg-white/5 hover:bg-white/10 text-white/60'
                             }`}
                           >
-                            {film.isFeatured ? '★ Featured Hero' : 'Feature'}
+                            {film.isFeatured ? 'Featured Hero' : 'Feature'}
                           </button>
 
                           <div className="flex items-center gap-1">

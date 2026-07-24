@@ -10,31 +10,36 @@ interface SubmissionModalProps {
   prefilledDirector?: string;
 }
 
-// Preset visual themes for easy poster selection
+// Preset visual themes for easy poster selection with separate Portrait and Landscape artwork
 const POSTER_PRESETS = [
   {
     name: 'Cyberpunk Neon',
-    url: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=600&h=900&q=80',
+    portraitUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=600&h=900&q=80',
+    landscapeUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&h=675&q=80',
     tag: 'Sci-Fi / Thriller'
   },
   {
     name: 'Dreamscape Portal',
-    url: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=600&h=900&q=80',
+    portraitUrl: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=600&h=900&q=80',
+    landscapeUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=1200&h=675&q=80',
     tag: 'Fantasy / Magic'
   },
   {
-    name: 'Cinematic Noir Portrait',
-    url: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=600&h=900&q=80',
+    name: 'Cinematic Noir',
+    portraitUrl: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=600&h=900&q=80',
+    landscapeUrl: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1200&h=675&q=80',
     tag: 'Drama / Documentary'
   },
   {
     name: 'Atmospheric Forest',
-    url: 'https://images.unsplash.com/photo-1500964757637-c85e8a162699?auto=format&fit=crop&w=600&h=900&q=80',
+    portraitUrl: 'https://images.unsplash.com/photo-1500964757637-c85e8a162699?auto=format&fit=crop&w=600&h=900&q=80',
+    landscapeUrl: 'https://images.unsplash.com/photo-1511871808023-c81c65bb8426?auto=format&fit=crop&w=1200&h=675&q=80',
     tag: 'Adventure / Mystery'
   },
   {
     name: 'Golden Hour Street',
-    url: 'https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?auto=format&fit=crop&w=600&h=900&q=80',
+    portraitUrl: 'https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?auto=format&fit=crop&w=600&h=900&q=80',
+    landscapeUrl: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=1200&h=675&q=80',
     tag: 'Experimental / Romance'
   }
 ];
@@ -191,8 +196,8 @@ Best Regards,
       }
     }
 
-    const posterUrl = customPosterUrl.trim() || POSTER_PRESETS[0].url;
-    const landscapePosterUrl = customLandscapePosterUrl.trim() || undefined;
+    const posterUrl = customPosterUrl.trim() || POSTER_PRESETS[0].portraitUrl;
+    const landscapePosterUrl = customLandscapePosterUrl.trim() || POSTER_PRESETS[0].landscapeUrl;
     const videoUrl = type === 'series' ? episodes[0].videoUrl.trim() : (customVideoUrl.trim() || VIDEO_PRESETS[0].url);
 
     onSubmit({
@@ -590,34 +595,76 @@ Best Regards,
             )}
           </div>
 
-          {/* Section 2: Film Poster Art (Portrait & Landscape) */}
+          {/* Section 2: Film Poster Artwork Options */}
           <div className="flex flex-col gap-4 shrink-0">
-            <h3 className="text-[10px] font-sans font-bold tracking-widest text-white/40 uppercase border-b border-white/5 pb-1">
-              2. Film Poster Art (Portrait & Landscape)
-            </h3>
+            <div className="flex items-center justify-between border-b border-white/5 pb-1">
+              <h3 className="text-[10px] font-sans font-bold tracking-widest text-white/40 uppercase">
+                2. Poster Artwork (Two Distinct Image Formats)
+              </h3>
+              <span className="text-[9px] font-mono text-amber-400">
+                Option 1: Card Thumbnail • Option 2: Featured Banner
+              </span>
+            </div>
+
+            {/* Quick Presets Bar */}
+            <div className="bg-black/40 border border-white/10 p-3 rounded-lg flex flex-col gap-2">
+              <span className="text-[9px] font-mono text-white/50 uppercase tracking-wider font-semibold">
+                Or Pick a Visual Theme Preset (Sets both Thumbnail & Featured Poster):
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {POSTER_PRESETS.map((p, idx) => (
+                  <button
+                    key={p.name}
+                    type="button"
+                    onClick={() => {
+                      setSelectedPosterIdx(idx);
+                      setCustomPosterUrl(p.portraitUrl);
+                      setCustomLandscapePosterUrl(p.landscapeUrl);
+                    }}
+                    className={`text-[10px] font-sans px-3 py-1.5 rounded border transition-all cursor-pointer flex items-center gap-1.5 ${
+                      customPosterUrl === p.portraitUrl && customLandscapePosterUrl === p.landscapeUrl
+                        ? 'bg-amber-500/20 text-amber-400 border-amber-500/40 font-bold'
+                        : 'bg-white/5 hover:bg-white/10 text-white/70 border-white/10'
+                    }`}
+                  >
+                    <span>{p.name}</span>
+                    <span className="text-[8px] opacity-60 font-mono">({p.tag})</span>
+                  </button>
+                ))}
+              </div>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Portrait Poster */}
-              <div className="flex flex-col gap-2 bg-white/5 p-3 rounded border border-white/10">
-                <div className="flex items-center justify-between">
-                  <label className="text-[9px] font-sans text-amber-400 uppercase tracking-widest font-bold">
-                    Portrait Poster (2:3 Ratio)
-                  </label>
-                  <span className="text-[8px] font-mono text-white/40">Vertical Cards</span>
+              {/* Option 1: Main Content Thumbnail (Portrait Poster 2:3) */}
+              <div className="flex flex-col gap-3 bg-white/5 p-4 rounded-lg border border-white/10 relative">
+                <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[9px] font-mono font-bold px-2 py-0.5 rounded">
+                      Option 1
+                    </span>
+                    <label className="text-[10px] font-sans text-white font-bold uppercase tracking-wider">
+                      Main Content Thumbnail
+                    </label>
+                  </div>
+                  <span className="text-[8px] font-mono text-white/40">Portrait (2:3)</span>
                 </div>
+                <p className="text-[10px] text-white/50 leading-relaxed">
+                  Used for catalog grids, search cards, and vertical film listings across the app.
+                </p>
+
                 <div className="flex gap-2">
                   <input
                     id="submit-custom-poster-input"
                     type="text"
                     required
-                    placeholder="Paste URL or click upload ->"
+                    placeholder="Paste Portrait image URL or upload file..."
                     value={customPosterUrl}
                     onChange={(e) => setCustomPosterUrl(e.target.value)}
-                    className="flex-1 bg-black/40 text-[#F5F5F7] text-xs px-2.5 py-2 rounded border border-white/10 focus:border-amber-500/50 focus:outline-none transition-all font-sans"
+                    className="flex-1 bg-black/50 text-[#F5F5F7] text-xs px-2.5 py-2 rounded border border-white/10 focus:border-amber-500/50 focus:outline-none transition-all font-sans"
                   />
                   <label className="px-3 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer shrink-0 transition-colors">
                     <Upload className="h-3.5 w-3.5" />
-                    <span>Upload File</span>
+                    <span>Upload</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -636,10 +683,18 @@ Best Regards,
                   </label>
                 </div>
 
-                {customPosterUrl && (
-                  <div className="flex flex-col gap-2 pt-1 border-t border-white/5">
+                {customPosterUrl ? (
+                  <div className="flex flex-col gap-2 pt-2 border-t border-white/5">
+                    <div className="aspect-[2/3] w-28 mx-auto rounded overflow-hidden border border-amber-500/30 shadow-lg relative bg-black">
+                      <img 
+                        src={customPosterUrl} 
+                        alt="Thumbnail preview" 
+                        className="w-full h-full object-cover"
+                        style={{ objectPosition: `center ${portraitPan}%` }}
+                      />
+                    </div>
                     <div className="flex items-center justify-between text-[9px] font-mono text-white/60">
-                      <span>Pan Up/Down ({portraitPan}%)</span>
+                      <span>Vertical Crop Pan ({portraitPan}%)</span>
                       <button 
                         type="button" 
                         onClick={() => setPortraitPan(50)} 
@@ -657,37 +712,42 @@ Best Regards,
                       className="w-full accent-amber-500 bg-neutral-800 rounded appearance-none h-1.5 cursor-pointer"
                     />
                   </div>
+                ) : (
+                  <div className="p-3 border border-dashed border-white/10 rounded text-center text-[10px] text-white/30 font-mono">
+                    No portrait thumbnail set
+                  </div>
                 )}
               </div>
 
-              {/* Landscape Poster */}
-              <div className="flex flex-col gap-2 bg-white/5 p-3 rounded border border-white/10">
-                <div className="flex items-center justify-between">
-                  <label className="text-[9px] font-sans text-amber-400 uppercase tracking-widest font-bold">
-                    Landscape Poster (16:9 Banner)
-                  </label>
-                  {customPosterUrl && (
-                    <button
-                      type="button"
-                      onClick={() => setCustomLandscapePosterUrl(customPosterUrl)}
-                      className="text-[8px] font-mono text-amber-400 hover:underline bg-amber-500/10 px-1.5 py-0.5 rounded"
-                    >
-                      Use Portrait URL
-                    </button>
-                  )}
+              {/* Option 2: Cinematic Featured Poster (Landscape Banner 16:9) */}
+              <div className="flex flex-col gap-3 bg-white/5 p-4 rounded-lg border border-white/10 relative">
+                <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[9px] font-mono font-bold px-2 py-0.5 rounded">
+                      Option 2
+                    </span>
+                    <label className="text-[10px] font-sans text-white font-bold uppercase tracking-wider">
+                      Cinematic Featured Poster
+                    </label>
+                  </div>
+                  <span className="text-[8px] font-mono text-white/40">Landscape (16:9)</span>
                 </div>
+                <p className="text-[10px] text-white/50 leading-relaxed">
+                  Used for featured hero spotlight, top carousel banners, and wide player backdrops.
+                </p>
+
                 <div className="flex gap-2">
                   <input
                     id="submit-custom-landscape-poster-input"
                     type="text"
-                    placeholder="Paste URL (Optional) or click upload ->"
+                    placeholder="Paste Landscape banner URL or upload file..."
                     value={customLandscapePosterUrl}
                     onChange={(e) => setCustomLandscapePosterUrl(e.target.value)}
-                    className="flex-1 bg-black/40 text-[#F5F5F7] text-xs px-2.5 py-2 rounded border border-white/10 focus:border-amber-500/50 focus:outline-none transition-all font-sans"
+                    className="flex-1 bg-black/50 text-[#F5F5F7] text-xs px-2.5 py-2 rounded border border-white/10 focus:border-amber-500/50 focus:outline-none transition-all font-sans"
                   />
                   <label className="px-3 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer shrink-0 transition-colors">
                     <Upload className="h-3.5 w-3.5" />
-                    <span>Upload File</span>
+                    <span>Upload</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -706,10 +766,18 @@ Best Regards,
                   </label>
                 </div>
 
-                {(customLandscapePosterUrl || customPosterUrl) && (
-                  <div className="flex flex-col gap-2 pt-1 border-t border-white/5">
+                {customLandscapePosterUrl ? (
+                  <div className="flex flex-col gap-2 pt-2 border-t border-white/5">
+                    <div className="aspect-[16/9] w-full rounded overflow-hidden border border-rose-500/30 shadow-lg relative bg-black max-h-28">
+                      <img 
+                        src={customLandscapePosterUrl} 
+                        alt="Featured poster preview" 
+                        className="w-full h-full object-cover"
+                        style={{ objectPosition: `center ${landscapePan}%` }}
+                      />
+                    </div>
                     <div className="flex items-center justify-between text-[9px] font-mono text-white/60">
-                      <span>Pan Up/Down ({landscapePan}%)</span>
+                      <span>Vertical Crop Pan ({landscapePan}%)</span>
                       <button 
                         type="button" 
                         onClick={() => setLandscapePan(50)} 
@@ -726,6 +794,10 @@ Best Regards,
                       onChange={(e) => setLandscapePan(Number(e.target.value))}
                       className="w-full accent-amber-500 bg-neutral-800 rounded appearance-none h-1.5 cursor-pointer"
                     />
+                  </div>
+                ) : (
+                  <div className="p-3 border border-dashed border-white/10 rounded text-center text-[10px] text-white/30 font-mono">
+                    No landscape banner set
                   </div>
                 )}
               </div>

@@ -7,16 +7,15 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isVerified() {
-      return isSignedIn() && request.auth.token.email_verified == true;
-    }
-
     function isAdmin() {
-      return isVerified() && request.auth.token.email == 'tilakpopat2007@gmail.com';
+      return isSignedIn() && (
+        (request.auth.token.email == 'tilakpopat2007@gmail.com') ||
+        (request.auth.uid == 'tilakpopat2007@gmail.com')
+      );
     }
 
     function isOwner(userId) {
-      return isVerified() && request.auth.uid == userId;
+      return isSignedIn() && request.auth.uid == userId;
     }
 
     function isValidId(id) {
@@ -36,11 +35,13 @@ service cloud.firestore {
       return fm.id is string && fm.id.size() <= 128
         && fm.name is string && fm.name.size() <= 128
         && fm.bio is string && fm.bio.size() <= 2000
-        && fm.avatar is string && fm.avatar.size() <= 1000
-        && fm.country is string && fm.country.size() <= 128
-        && fm.role is string && fm.role.size() <= 128
+        && (!fm.keys().contains('avatar') || (fm.avatar is string && fm.avatar.size() <= 1000))
+        && (!fm.keys().contains('avatarUrl') || (fm.avatarUrl is string && fm.avatarUrl.size() <= 1000))
+        && (!fm.keys().contains('country') || (fm.country is string && fm.country.size() <= 128))
+        && (!fm.keys().contains('role') || (fm.role is string && fm.role.size() <= 128))
         && (!fm.keys().contains('instagram') || (fm.instagram is string && fm.instagram.size() <= 128))
         && (!fm.keys().contains('portfolio') || (fm.portfolio is string && fm.portfolio.size() <= 256))
+        && (!fm.keys().contains('website') || (fm.website is string && fm.website.size() <= 256))
         && (!fm.keys().contains('userId') || (fm.userId is string && fm.userId.size() <= 128))
         && (!fm.keys().contains('upiId') || (fm.upiId is string && fm.upiId.size() <= 128))
         && (!fm.keys().contains('createdAt') || (fm.createdAt is number));
@@ -61,7 +62,9 @@ service cloud.firestore {
         && film.likes is number && film.likes >= 0
         && film.reviews is list
         && (!film.keys().contains('cameraUsed') || (film.cameraUsed is string && film.cameraUsed.size() <= 128))
+        && (!film.keys().contains('lensUsed') || (film.lensUsed is string && film.lensUsed.size() <= 128))
         && (!film.keys().contains('filmmakerId') || (film.filmmakerId is string && film.filmmakerId.size() <= 128))
+        && (!film.keys().contains('directorId') || (film.directorId is string && film.directorId.size() <= 128))
         && (!film.keys().contains('isFeatured') || (film.isFeatured is bool))
         && (!film.keys().contains('upiId') || (film.upiId is string && film.upiId.size() <= 128))
         && (!film.keys().contains('createdAt') || (film.createdAt is number))
@@ -85,32 +88,32 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // 1. Filmmakers Collection
+    // 1. Filmmakers Collection (Public catalog read)
     match /filmmakers/{filmmakerId} {
-      allow read, list: if isVerified();
-      allow create, update: if isVerified() && isValidId(filmmakerId) && (isAdmin() || (isOwner(filmmakerId) && isValidFilmmaker(incoming())));
+      allow read, list: if true;
+      allow create, update: if isSignedIn() && isValidId(filmmakerId) && (isAdmin() || (isOwner(filmmakerId) && isValidFilmmaker(incoming())));
       allow delete: if isAdmin() || isOwner(filmmakerId);
     }
 
-    // 2. Upcoming Films Collection
+    // 2. Upcoming Films Collection (Public catalog read)
     match /upcoming_films/{upcomingFilmId} {
-      allow read, list: if isVerified();
+      allow read, list: if true;
       allow create, update, delete: if isAdmin() && isValidId(upcomingFilmId);
     }
 
-    // 3. Users Collection
+    // 3. Users Collection (User isolated data)
     match /users/{userId} {
       allow read, get: if isOwner(userId);
       allow create, update, delete: if isOwner(userId) && isValidId(userId);
     }
 
-    // 4. Films Collection
+    // 4. Films Collection (Public catalog read)
     match /films/{filmId} {
-      allow read, list: if isVerified();
-      allow create: if isVerified() && isValidId(filmId) && (isAdmin() || (isValidFilm(incoming()) && incoming().submittedByUid == request.auth.uid && incoming().approvalStatus == 'pending'));
+      allow read, list: if true;
+      allow create: if isSignedIn() && isValidId(filmId) && (isAdmin() || (isValidFilm(incoming()) && incoming().submittedByUid == request.auth.uid && incoming().approvalStatus == 'pending'));
       allow delete: if isAdmin() && isValidId(filmId);
       
-      allow update: if isVerified() && isValidId(filmId) && (
+      allow update: if isValidId(filmId) && (
         isAdmin() || (
           isValidFilm(incoming()) && (
             // Action 1: Toggle Like (only modification to 'likes' is permitted)
@@ -126,10 +129,10 @@ service cloud.firestore {
       );
     }
 
-    // 5. Tips Collection
+    // 5. Tips Collection (Public read, creation permitted)
     match /tips/{tipId} {
-      allow read, list: if isVerified();
-      allow create: if isVerified() && isValidId(tipId) && isValidTip(incoming());
+      allow read, list: if true;
+      allow create: if isValidId(tipId) && isValidTip(incoming());
       allow update, delete: if false;
     }
   }

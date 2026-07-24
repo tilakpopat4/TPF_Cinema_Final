@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, X, Calendar, Film, ExternalLink, Shield, ShieldOff } from 'lucide-react';
+import { Play, X, Calendar, Film, ExternalLink } from 'lucide-react';
 import { UpcomingFilm } from '../types';
 import { getDirectImageUrl, getVideoEmbedData } from '../lib/driveUtils';
 
@@ -12,88 +12,80 @@ export default function UpcomingMovies({ upcomingList }: UpcomingMoviesProps) {
   const [lightboxVideo, setLightboxVideo] = useState<string | null>(null);
   const [lightboxTitle, setLightboxTitle] = useState<string>('');
   const [videoError, setVideoError] = useState(false);
-  const [stealthPipeline, setStealthPipeline] = useState(true);
 
-  const embedData = lightboxVideo ? getVideoEmbedData(lightboxVideo, { hideYouTubePlayerUI: stealthPipeline }) : { isEmbed: false, embedUrl: '', provider: 'direct' };
+  const embedData = lightboxVideo ? getVideoEmbedData(lightboxVideo, { hideYouTubePlayerUI: true }) : { isEmbed: false, embedUrl: '', provider: 'direct' };
 
   return (
-    <div id="upcoming-movies-section" className="bg-[#09090b] p-6 rounded-xl border border-white/5 shadow-2xl relative overflow-hidden">
-      {/* Decorative background glow */}
-      <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
-
+    <div id="upcoming-movies-section" className="bg-[#0e0e11] p-6 md:p-8 rounded-2xl border border-white/10 shadow-xl">
       {/* Header */}
-      <div className="flex items-center gap-2.5 mb-6 border-b border-white/5 pb-4">
-        <div className="p-2 bg-amber-500/10 rounded-lg border border-amber-500/20 text-amber-400">
-          <Film className="h-4 w-4" />
-        </div>
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 mb-6 border-b border-white/10 pb-4">
         <div>
-          <h3 className="text-sm font-mono font-extrabold tracking-widest uppercase text-[#F5F5F7] flex items-center gap-1.5">
-            Upcoming Movies
-            <span className="text-[9px] font-mono font-bold bg-amber-500/15 text-amber-500 border border-amber-500/25 px-1.5 py-0.5 rounded uppercase tracking-wider">
-              Trailers & Announcements
-            </span>
+          <span className="text-xs font-mono uppercase tracking-widest text-amber-400 font-semibold block mb-1">
+            FIRST LOOKS & TEASERS
+          </span>
+          <h3 className="text-xl font-bold tracking-tight text-white">
+            Upcoming Premieres
           </h3>
-          <p className="text-[11px] text-white/40 font-sans mt-0.5">Preview highly anticipated releases from our global creator network.</p>
         </div>
+        <p className="text-xs text-zinc-400 max-w-md">
+          Preview upcoming independent releases and trailers from our community.
+        </p>
       </div>
 
       {/* Grid of Trailers */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {upcomingList.map((film) => (
           <div 
             key={film.id}
-            className="group flex flex-col bg-[#0d0d10]/60 border border-white/5 rounded-lg overflow-hidden hover:border-white/10 hover:bg-[#111114]/80 transition-all duration-300"
+            className="group flex flex-col bg-[#141418] border border-white/10 rounded-xl overflow-hidden hover:border-amber-500/40 hover:bg-[#18181f] transition-all duration-200"
           >
-            {/* Landscape Thumbnail at the top */}
+            {/* Thumbnail */}
             <div 
               onClick={() => {
                 setLightboxVideo(film.videoUrl);
                 setLightboxTitle(film.title);
                 setVideoError(false);
               }}
-              className="aspect-video w-full overflow-hidden relative border-b border-white/5 bg-black cursor-pointer"
+              className="aspect-video w-full overflow-hidden relative bg-black cursor-pointer"
             >
               <img 
                 src={getDirectImageUrl(film.thumbnailUrl)} 
                 alt={film.title} 
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 referrerPolicy="no-referrer"
               />
-              <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                <div className="w-12 h-12 rounded-full bg-amber-500 text-black flex items-center justify-center shadow-lg shadow-amber-500/20 group-hover:scale-110 transition-transform duration-300">
+              <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                <div className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white flex items-center justify-center group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-black group-hover:border-amber-400 transition-all duration-200 shadow-lg">
                   <Play className="h-5 w-5 fill-current ml-0.5" />
                 </div>
               </div>
-              <div className="absolute bottom-2 right-2 bg-black/75 px-2 py-0.5 rounded text-[8px] font-mono font-bold text-amber-500 uppercase tracking-widest border border-white/10">
-                Play Trailer
+              <div className="absolute bottom-2.5 right-2.5 bg-black/80 backdrop-blur-md px-2.5 py-1 rounded-md text-[10px] font-medium text-zinc-300 border border-white/10">
+                Watch Trailer
               </div>
             </div>
 
-            {/* Information below thumbnail */}
+            {/* Content info */}
             <div className="p-4 flex flex-col flex-1">
-              <div className="flex items-center justify-between gap-2 mb-1.5">
-                <span className="text-[9px] font-mono text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded font-bold uppercase tracking-wider">
-                  Upcoming
-                </span>
-                <span className="text-[10px] text-white/40 font-mono flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <span className="text-[11px] text-zinc-400 flex items-center gap-1 font-mono">
+                  <Calendar className="h-3 w-3 text-amber-400" />
                   {film.expectedRelease}
                 </span>
               </div>
               
-              <h4 className="text-sm font-bold text-[#F5F5F7] tracking-tight group-hover:text-amber-500 transition-colors">
+              <h4 className="text-base font-bold text-white group-hover:text-amber-400 transition-colors">
                 {film.title}
               </h4>
-              <p className="text-[11px] text-white/40 font-medium mt-0.5 font-mono">Dir: {film.director}</p>
+              <p className="text-xs text-zinc-400 mt-0.5">Directed by {film.director}</p>
               
-              <p className="text-xs text-[#a1a1aa] font-sans mt-3 line-clamp-2 leading-relaxed flex-1">
+              <p className="text-xs text-zinc-300/80 mt-2.5 line-clamp-2 leading-relaxed flex-1">
                 {film.description}
               </p>
 
-              <div className="flex flex-wrap gap-1.5 mt-4 pt-3 border-t border-white/5">
+              <div className="flex flex-wrap gap-1.5 mt-4 pt-3 border-t border-white/10">
                 {film.genre.map((g, i) => (
-                  <span key={i} className="text-[9px] font-mono text-white/50 bg-white/5 px-2 py-0.5 rounded border border-white/5">
-                    #{g}
+                  <span key={i} className="text-[10px] text-zinc-300 bg-white/5 px-2 py-0.5 rounded-full border border-white/10">
+                    {g}
                   </span>
                 ))}
               </div>
@@ -102,46 +94,41 @@ export default function UpcomingMovies({ upcomingList }: UpcomingMoviesProps) {
         ))}
       </div>
 
-      {/* Embedded Video Trailer Lightbox Modal */}
+      {/* Video Lightbox Modal */}
       <AnimatePresence>
         {lightboxVideo && (
-          <div className="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4">
             <motion.div 
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="relative w-full max-w-4xl bg-[#09090b] rounded-xl border border-white/10 overflow-hidden shadow-2xl"
+              className="relative w-full max-w-4xl bg-[#121215] rounded-xl border border-white/15 overflow-hidden shadow-2xl"
             >
-              {/* Lightbox header */}
-              <div className="flex items-center justify-between px-5 py-3 border-b border-white/10">
+              {/* Modal header */}
+              <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/10 bg-[#0e0e11]">
                 <div className="flex items-center gap-2">
-                  <Play className="h-4 w-4 text-amber-500 fill-current" />
-                  <span className="text-xs font-mono font-extrabold uppercase tracking-widest text-amber-500">
-                    TRAILER PREVIEW
-                  </span>
-                  <span className="text-white/20">•</span>
-                  <span className="text-xs font-bold text-[#F5F5F7] truncate max-w-xs">{lightboxTitle}</span>
+                  <Play className="h-4 w-4 text-amber-400 fill-current" />
+                  <span className="text-xs font-semibold text-white truncate">{lightboxTitle}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <a
                     href={lightboxVideo}
                     target="_blank"
                     rel="noreferrer"
-                    className="p-1 px-2 rounded bg-white/5 border border-white/10 hover:bg-white/10 text-[10px] font-mono text-white/70 hover:text-white transition-colors flex items-center gap-1"
-                    title="Open original source in new tab"
+                    className="px-2.5 py-1 rounded bg-white/10 hover:bg-white/20 text-xs text-zinc-200 transition-colors flex items-center gap-1.5"
                   >
-                    <ExternalLink className="h-3 w-3 text-amber-400" /> Open Source
+                    <ExternalLink className="h-3.5 w-3.5 text-amber-400" /> Source
                   </a>
                   <button 
                     onClick={() => setLightboxVideo(null)}
-                    className="p-1 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 hover:text-white transition-colors cursor-pointer text-white/60"
+                    className="p-1 rounded-lg bg-white/10 hover:bg-white/20 text-zinc-300 hover:text-white transition-colors cursor-pointer"
                   >
                     <X className="h-4 w-4" />
                   </button>
                 </div>
               </div>
 
-              {/* Player container (handles YouTube, Google Drive, Vimeo, and direct MP4) */}
+              {/* Player container */}
               <div className="aspect-video relative bg-black flex items-center justify-center overflow-hidden">
                 {embedData.isEmbed ? (
                   <iframe
@@ -164,34 +151,20 @@ export default function UpcomingMovies({ upcomingList }: UpcomingMoviesProps) {
 
                 {!embedData.isEmbed && videoError && (
                   <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/95 p-6 text-center">
-                    <div className="w-12 h-12 rounded-full bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-amber-500 mb-3 animate-pulse">
-                      <Play className="h-5 w-5 fill-current" />
-                    </div>
-                    <h4 className="text-xs font-mono font-bold text-white uppercase tracking-widest mb-1.5">Trailer Offline</h4>
-                    <p className="text-[10px] text-white/50 max-w-sm leading-relaxed mb-4 font-sans">
-                      The public media source is blocked, expired, or requires opening directly.
+                    <h4 className="text-sm font-semibold text-white mb-2">Trailer Unavailable in Player</h4>
+                    <p className="text-xs text-zinc-400 max-w-sm mb-4">
+                      The video link requires viewing directly on its native host.
                     </p>
                     <a
                       href={lightboxVideo}
                       target="_blank"
                       rel="noreferrer"
-                      className="px-3 py-1.5 bg-amber-500 text-black font-bold border border-amber-400 text-[9px] font-mono tracking-widest uppercase rounded transition-colors"
+                      className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-black font-semibold text-xs rounded transition-colors"
                     >
-                      Open in New Tab
+                      Open Video in New Tab
                     </a>
                   </div>
                 )}
-              </div>
-
-              {/* Lightbox footer */}
-              <div className="p-4 bg-[#050507] border-t border-white/5 flex items-center justify-between text-[9px] font-mono text-white/40 uppercase tracking-widest">
-                <span>TPF Cinemas • Upcoming Indie Releases Preview</span>
-                <button
-                  onClick={() => setLightboxVideo(null)}
-                  className="text-white/60 hover:text-amber-500 font-bold border-b border-white/15 hover:border-amber-500/50 transition-colors"
-                >
-                  CLOSE PREVIEW
-                </button>
               </div>
             </motion.div>
           </div>
