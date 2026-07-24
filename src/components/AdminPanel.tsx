@@ -1912,14 +1912,52 @@ export default function AdminPanel({
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-mono uppercase text-white/50">Landscape Thumbnail URL (Unsplash or Google Drive)</label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-mono uppercase text-amber-400 font-bold">
+                      Landscape Thumbnail (Image URL or Local File Upload)
+                    </label>
+                    <label className="cursor-pointer text-[9px] font-mono font-bold uppercase text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/30 flex items-center gap-1 transition-all">
+                      <Upload className="h-3 w-3 text-amber-400" />
+                      <span>Upload Local Image</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            try {
+                              const res = await saveMediaFile(file);
+                              setUpcomingForm(prev => ({ 
+                                ...prev, 
+                                thumbnailUrl: res.mediaKey 
+                              }));
+                            } catch (err) {
+                              console.error('Error saving local thumbnail:', err);
+                              setUpcomingForm(prev => ({ ...prev, thumbnailUrl: URL.createObjectURL(file) }));
+                            }
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
                   <input
-                    type="url"
+                    type="text"
                     value={upcomingForm.thumbnailUrl || ''}
                     onChange={(e) => setUpcomingForm({ ...upcomingForm, thumbnailUrl: e.target.value })}
-                    className="bg-black border border-white/10 p-2 rounded text-white focus:outline-none focus:border-amber-500/50"
-                    placeholder="https://images.unsplash.com/... or Google Drive Image link"
+                    className="bg-black border border-white/10 p-2 rounded text-white focus:outline-none focus:border-amber-500/50 text-xs font-sans"
+                    placeholder="https://images.unsplash.com/... or click 'Upload Local Image'"
                   />
+                  {upcomingForm.thumbnailUrl && (
+                    <div className="mt-1 relative w-36 aspect-[16/9] rounded overflow-hidden border border-amber-500/30 bg-black shadow-md">
+                      <img
+                        src={getDirectImageUrl(upcomingForm.thumbnailUrl)}
+                        alt="Thumbnail preview"
+                        className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-1.5">
@@ -2331,7 +2369,7 @@ export default function AdminPanel({
                       <tr key={uf.id} className="hover:bg-white/[0.02] transition-colors group">
                         <td className="py-3 px-2 flex items-start gap-2.5">
                           <img 
-                            src={uf.thumbnailUrl} 
+                            src={getDirectImageUrl(uf.thumbnailUrl)} 
                             alt="" 
                             className="w-16 h-10 object-cover rounded bg-black/40 border border-white/10 shrink-0"
                             referrerPolicy="no-referrer"
