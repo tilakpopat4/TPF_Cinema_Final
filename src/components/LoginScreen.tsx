@@ -45,10 +45,10 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
         {/* Brand Logo Container with soft highlight for readability */}
         <div className="bg-white px-8 py-5 rounded-2xl shadow-inner flex items-center justify-center mb-6 hover:scale-[1.02] transition-all duration-300">
           <img
-            src="https://lh3.googleusercontent.com/d/1JPXumtChr94uaSSJ8rXTo8d4yJayFjzS"
+            src="https://lh3.googleusercontent.com/d/1WnKEHu3WYNJ8JUgzVlq5Eouzdw9LRIwc"
             alt="TPF Cinemas"
             referrerPolicy="no-referrer"
-            className="h-[75px] w-auto object-contain select-none"
+            className="h-[96px] w-auto object-contain select-none"
           />
         </div>
 

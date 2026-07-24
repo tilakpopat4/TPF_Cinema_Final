@@ -57,11 +57,11 @@ export default function Header({
             >
               <img
                 id="tpf-cinemas-logo"
-                src="https://lh3.googleusercontent.com/d/1JPXumtChr94uaSSJ8rXTo8d4yJayFjzS"
+                src="https://lh3.googleusercontent.com/d/1WnKEHu3WYNJ8JUgzVlq5Eouzdw9LRIwc"
                 alt="TPF Cinemas | An OTT For Beginners"
                 title="TPF Cinemas | An OTT For Beginners"
                 referrerPolicy="no-referrer"
-                className="h-[38px] sm:h-[50px] md:h-[68px] w-auto object-contain select-none transition-all duration-300 group-hover:scale-[1.02]"
+                className="h-[49px] sm:h-[64px] md:h-[87px] w-auto object-contain select-none transition-all duration-300 group-hover:scale-[1.02]"
               />
             </div>
 
